@@ -1,5 +1,5 @@
-from encoders import unpack_object, pack_object
-from storage.persistence import Persistence, LockedEntryException, \
+from cururu.compression import unpack_object, pack_object
+from cururu.persistence import Persistence, LockedEntryException, \
     FailedEntryException, DuplicateEntryException
 import _pickle as pickle
 from pathlib import Path

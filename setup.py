@@ -44,7 +44,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 
 INSTALL_REQUIRES = [
-    'zstd', 'lz4', 'liac-arff', 'pymysql'
+    'zstd', 'lz4', 'liac-arff', 'pymysql', 'blosc'
 ]
 
 
