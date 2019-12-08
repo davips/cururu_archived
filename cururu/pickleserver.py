@@ -21,9 +21,8 @@ class PickleServer(Persistence):
         self._dump(data, file)
 
     def fetch(self, data, fields, transformation=None, lock=False):
-        transformed_data_stub = data.updated(transformation)
-        file = self.db + data.dataset.name + '-' + \
-               transformed_data_stub.uuid() + '.dump'
+        newdata_stub = data.updated(transformation)
+        file = self.db + data.dataset.name + '-' + newdata_stub.uuid() + '.dump'
 
         # Not started yet?
         if not Path(file).exists():
@@ -93,4 +92,3 @@ class PickleServer(Persistence):
                 matrices.append(arg)
         for mat in matrices:
             del data.__dict__[mat]
-

@@ -25,8 +25,8 @@ class Persistence(ABC):
         :param data: Data object before being transformed by a Pipeline or a
         string indicating the dataset of a dataset that suffered no transformations
         :param fields: list of names of the matrices to fetch
-        :param transformation: Tuple (Pipeline, operation) containing a
-        list of transformers and the stage of transformation 'a':apply; 'u':use
+        :param transformation: Transformation object containing the transformer
+        and the stage of transformation (apply/use).
         :param lock: whether to mark entry (input data and pipeline combination)
                         as locked, when no data is found for the entry
         :return: Data or None
