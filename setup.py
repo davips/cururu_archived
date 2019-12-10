@@ -83,3 +83,5 @@ setuptools.setup(
     extras_require=EXTRAS_REQUIRE,
 )
 
+package_dir = {'': 'cururu'}  # For IDEs like Intellij to recognize the package.
+
