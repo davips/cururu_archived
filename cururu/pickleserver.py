@@ -12,7 +12,7 @@ class PickleServer(Persistence):
         self.speed = optimize == 'speed'  # vs 'space'
 
     def store(self, data, fields, check_dup=True):
-        file = self.db + data.dataset.name + '-' + data.uuid() + '.dump'
+        file = self.db + data.dataset.name + '-' + data.uuid + '.dump'
 
         # Already exists?
         if check_dup and Path(file).exists():
@@ -22,7 +22,7 @@ class PickleServer(Persistence):
 
     def fetch(self, data, fields, transformation=None, lock=False):
         newdata_stub = data.updated(transformation)
-        file = self.db + data.dataset.name + '-' + newdata_stub.uuid() + '.dump'
+        file = self.db + data.dataset.name + '-' + newdata_stub.uuid + '.dump'
 
         # Not started yet?
         if not Path(file).exists():
