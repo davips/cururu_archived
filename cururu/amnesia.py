@@ -1,7 +1,10 @@
-from storage.persistence import Persistence
+from cururu.persistence import Persistence
 
 
 class Amnesia(Persistence):
+    def list_by_name(self, substring):
+        return []
+
     def store(self, data, fields, check_dup=True):
         return None
 
