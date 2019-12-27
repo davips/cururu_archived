@@ -21,16 +21,29 @@ class Persistence(ABC):
 
     @abstractmethod
     def fetch(self, data, fields, transformation=None, lock=False):
-        """
-        :param data: Data object before being transformed by a Pipeline or a
-        string indicating the dataset of a dataset that suffered no transformations
-        :param fields: list of names of the matrices to fetch
-        :param transformation: Transformation object containing the transformer
-        and the stage of transformation (apply/use).
-        :param lock: whether to mark entry (input data and pipeline combination)
-                        as locked, when no data is found for the entry
-        :return: Data or None
-        :exception LockedEntryException, FailedEntryException
+        """Fetch data from DB.
+
+        Parameters
+        ----------
+        data
+            Data object before being transformed by a Pipeline
+             TODO: o que é isso?: or a string indicating the dataset of a dataset that suffered no transformations
+        fields
+            list of names of the matrices to fetch
+        transformation
+            Transformation object containing the transformer and the stage of
+            transformation (apply/use).
+        lock
+            whether to mark entry (input data and pipeline combination) as
+            locked, when no data is found for the entry
+
+        Returns
+        -------
+        Data or None
+
+        Exception
+        ---------
+        LockedEntryException, FailedEntryException
         """
         pass
 
@@ -44,13 +57,15 @@ class Persistence(ABC):
         """
         pass
 
+
 class LockedEntryException(Exception):
     """Another node is generating output data for this input data
     and transformation combination."""
 
 
 class FailedEntryException(Exception):
-    """This input data and transformation combination have already failed before."""
+    """This input data and transformation combination have already failed
+    before."""
 
 
 class DuplicateEntryException(Exception):
