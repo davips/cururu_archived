@@ -1,4 +1,5 @@
 from cururu.compression import unpack_object, pack_object
+from cururu.file import save, load
 from cururu.persistence import Persistence, LockedEntryException, \
     FailedEntryException, DuplicateEntryException
 import _pickle as pickle
@@ -53,31 +54,33 @@ class PickleServer(Persistence):
             datas.append(data)
         return datas
 
-    def _load(self, file):
+    def _load(self, filename):
         """
         Retrieve a Data object from disk.
-        :param file: file dataset
+        :param filename: file dataset
         :return: Data
         """
-        f = open(file, 'rb')
         if self.speed:
-            return pickle.load(f)
+            f = open(filename, 'rb')
+            res = pickle.load(f)
+            f.close()
+            return res
         else:
-            return unpack_object(f.read())
+            return load(filename)
 
-    def _dump(self, data, file):
+    def _dump(self, data, filename):
         """
         Dump a Data object to disk.
         :param data: Data
-        :param file: file dataset
+        :param filename: file dataset
         :return: None
         """
-        f = open(file, 'wb')
         if self.speed:
+            f = open(filename, 'wb')
             pickle.dump(data, f)
-        else:
-            f.write(pack_object(data))
             f.close()
+        else:
+            save(filename, data)
 
     def _erase(self, data):
         """
