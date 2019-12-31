@@ -23,6 +23,8 @@ class PickleServer(Persistence):
 
     def fetch(self, data, fields, transformation=None, lock=False):
         newdata_stub = data.updated(transformation)
+        print(222222, newdata_stub.uuid)
+        print(newdata_stub.history)
         file = self.db + data.dataset.name + '-' + newdata_stub.uuid + '.dump'
 
         # Not started yet?
@@ -82,7 +84,8 @@ class PickleServer(Persistence):
         else:
             save(filename, data)
 
-    def _erase(self, data):
+    @staticmethod
+    def _erase(data):
         """
         Remove matrices from Data.
         Keep identity.
