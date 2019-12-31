@@ -21,10 +21,9 @@ class PickleServer(Persistence):
 
         self._dump(data, file)
 
-    def fetch(self, data, fields, transformation=None, lock=False):
-        newdata_stub = data.updated(transformation)
-        print(222222, newdata_stub.uuid)
-        print(newdata_stub.history)
+    def fetch(self, data, fields, transformations=None, lock=False):
+        newdata_stub = data.updated1(transformation=transformations)
+        print(2222222, newdata_stub.uuid, newdata_stub.history)
         file = self.db + data.dataset.name + '-' + newdata_stub.uuid + '.dump'
 
         # Not started yet?
