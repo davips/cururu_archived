@@ -9,33 +9,48 @@ class Persistence(ABC):
     """
 
     @abstractmethod
-    def store(self, data, fields, check_dup=True):
+    def store(self, data_in, transformation, fields, data_out, check_dup=True):
         """
-        :param data: Data to store
-        :param fields: list of names of the matrices to store
-        :param check_dup: whether to waste time checking duplicates
-        :return: None
-        :exception DuplicateEntryException
+        Parameters
+        ----------
+        data_in
+            Data object before transformation.
+        transformation
+            Transformation object containing the transformer and the stage of
+            transformation (apply/use).
+        fields
+            List of names of the matrices to store.
+        data_out
+            Data object to recover.
+        check_dup
+            Whether to waste time checking duplicates
+
+        Returns
+        -------
+        Data or None
+
+        Exception
+        ---------
+        DuplicateEntryException
         """
         pass
 
     @abstractmethod
-    def fetch(self, data, fields, transformation=None, lock=False):
+    def fetch(self, data, transformation, fields, lock=False):
         """Fetch data from DB.
 
         Parameters
         ----------
         data
             Data object before being transformed by a Pipeline
-             TODO: o que é isso?: or a string indicating the dataset of a dataset that suffered no transformations
         fields
-            list of names of the matrices to fetch
+            List of names of the matrices to fetch.
         transformation
             Transformation object containing the transformer and the stage of
             transformation (apply/use).
         lock
-            whether to mark entry (input data and pipeline combination) as
-            locked, when no data is found for the entry
+            Whether to mark entry (input data and pipeline combination) as
+            locked, when no data is found for the entry.
 
         Returns
         -------

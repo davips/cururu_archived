@@ -12,34 +12,38 @@ class PickleServer(Persistence):
         self.db = db
         self.speed = optimize == 'speed'  # vs 'space'
 
-    def store(self, data, fields, check_dup=True):
-        file = self.db + data.dataset.name + '-' + data.uuid + '.dump'
+    def _filename(self, data_in, transformation):
+        return self.db + data_in.dataset.name + '-' + \
+               data_in.uuid + '-' + transformation.uuid + '.dump'
+
+    def store(self, data_in, transformation, fields, data_out, check_dup=True):
+        # TODO: deal with fields and missing fields?
+        filename = self._filename(data_in, transformation)
 
         # Already exists?
-        if check_dup and Path(file).exists():
+        if check_dup and Path(filename).exists():
             raise DuplicateEntryException
 
-        self._dump(data, file)
+        self._dump(data_out, filename)
 
-    def fetch(self, data, fields, transformations=None, lock=False):
-        newdata_stub = data.updated1(transformation=transformations)
-        print(2222222, newdata_stub.uuid, newdata_stub.history)
-        file = self.db + data.dataset.name + '-' + newdata_stub.uuid + '.dump'
+    def fetch(self, data_in, transformation, fields, lock=False):
+        # TODO: deal with fields and missing fields?
+        filename = self._filename(data_in, transformation)
 
         # Not started yet?
-        if not Path(file).exists():
-            print('W: Not started.', file)
+        if not Path(filename).exists():
+            print('W: Not started.', filename)
             if lock:
-                print('W: Locking...', file)
-                Path(file).touch()
+                print('W: Locking...', filename)
+                Path(filename).touch()
             return None
 
         # Locked?
-        if Path(file).stat().st_size == 0:
-            print('W: Previously locked by other process.', file)
+        if Path(filename).stat().st_size == 0:
+            print('W: Previously locked by other process.', filename)
             raise LockedEntryException
 
-        transformed_data = self._load(file)
+        transformed_data = self._load(filename)
 
         # Failed?
         if transformed_data.failure is not None:
@@ -51,8 +55,7 @@ class PickleServer(Persistence):
         datas = []
         for file in glob(self.db + f'*{substring}*-*.dump'):
             data = self._load(file)
-            self._erase(data)
-            datas.append(data)
+            datas.append(data.empty())
         return datas
 
     def _load(self, filename):
@@ -83,17 +86,18 @@ class PickleServer(Persistence):
         else:
             save(filename, data)
 
-    @staticmethod
-    def _erase(data):
-        """
-        Remove matrices from Data.
-        Keep identity.
-        :param data:
-        :return:
-        """
-        matrices = []
-        for arg in data.__dict__:
-            if len(arg) == 1:
-                matrices.append(arg)
-        for mat in matrices:
-            del data.__dict__[mat]
+    # Obsolete since we can use Data.phantom
+    # @staticmethod
+    # def _erase(data):
+    #     """
+    #     Remove matrices from Data.
+    #     Keep identity.
+    #     :param data:
+    #     :return:
+    #     """
+    #     matrices = []
+    #     for arg in data.__dict__:
+    #         if len(arg) == 1:
+    #             matrices.append(arg)
+    #     for mat in matrices:
+    #         del data.__dict__[mat]
