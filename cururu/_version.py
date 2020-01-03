@@ -1,5 +1,5 @@
 """
-``pjdata`` is a ...
+``cururu`` is a ...
 """
 # Based on NiLearn package
 # License: simplified BSD
