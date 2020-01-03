@@ -1,3 +1,5 @@
+import os
+
 from cururu.compression import unpack_object, pack_object
 from cururu.file import save, load
 from cururu.persistence import Persistence, LockedEntryException, \
@@ -12,23 +14,23 @@ class PickleServer(Persistence):
         self.db = db
         self.speed = optimize == 'speed'  # vs 'space'
 
-    def _filename(self, data_in, transformation):
-        return self.db + data_in.dataset.name + '-' + \
-               data_in.uuid + '-' + transformation.uuid + '.dump'
-
-    def store(self, data_in, transformation, fields, data_out, check_dup=True):
-        # TODO: deal with fields and missing fields?
-        filename = self._filename(data_in, transformation)
-
-        # Already exists?
-        if check_dup and Path(filename).exists():
-            raise DuplicateEntryException
-
-        self._dump(data_out, filename)
+    def _filename(self, prefix, data_in, transformation):
+        rest = '-' + data_in.uuid + '-' + transformation.uuid + '.dump'
+        if prefix == '*':
+            query = self.db + '*' + rest
+            lst = glob(query)
+            if len(lst) > 1:
+                raise Exception('Multiple files found:', query, lst)
+            if len(lst) == 1:
+                return lst[0]
+            else:
+                return self.db + rest
+        else:
+            return self.db + prefix + rest
 
     def fetch(self, data_in, transformation, fields, lock=False):
         # TODO: deal with fields and missing fields?
-        filename = self._filename(data_in, transformation)
+        filename = self._filename('*', data_in, transformation)
 
         # Not started yet?
         if not Path(filename).exists():
@@ -51,11 +53,25 @@ class PickleServer(Persistence):
 
         return transformed_data
 
+    def store(self, data_in, transformation, fields, data_out, check_dup=True):
+        # TODO: deal with fields and missing fields?
+        filename = self._filename(data_out.dataset.name,
+                                  data_in, transformation)
+
+        # Already exists?
+        if check_dup and Path(filename).exists():
+            raise DuplicateEntryException
+
+        locked = self._filename('', data_in, transformation)
+        os.remove(locked)
+
+        self._dump(data_out, filename)
+
     def list_by_name(self, substring):
         datas = []
         for file in glob(self.db + f'*{substring}*-*.dump'):
             data = self._load(file)
-            datas.append(data.empty())
+            datas.append(data.phantom)
         return datas
 
     def _load(self, filename):
