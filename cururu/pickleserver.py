@@ -43,7 +43,7 @@ class PickleServer(Persistence):
 
         # Not started yet?
         if not Path(filename).exists():
-            print('W: Not started.', filename)
+            # print('W: Not started.', filename)
             if lock:
                 print('W: Locking...', filename)
                 Path(filename).touch()
