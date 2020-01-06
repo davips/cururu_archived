@@ -1,5 +1,4 @@
-from cururu.compression import pack_object, unpack_object, pack_data, \
-    unpack_data
+from cururu.compression import pack_data, unpack_data
 
 
 def save(filename, obj):

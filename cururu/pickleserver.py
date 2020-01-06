@@ -1,18 +1,20 @@
 import os
 
 from cururu.compression import unpack_object, pack_object
-from cururu.file import save, load
+from cururu.disk import save, load
 from cururu.persistence import Persistence, LockedEntryException, \
-    FailedEntryException, DuplicateEntryException
+    FailedEntryException, DuplicateEntryException, UnlockedEntryException
 import _pickle as pickle
 from pathlib import Path
 from glob import glob
 
 
 class PickleServer(Persistence):
-    def __init__(self, optimize='speed', db='/tmp/'):
+    def __init__(self, optimize='speed', db='/tmp/cururu'):
         self.db = db
         self.speed = optimize == 'speed'  # vs 'space'
+        if not Path(db).exists():
+            os.mkdir(db)
 
     def _filename(self, prefix, previous_data, transformation):
         # TODO: move NoThing uuids to parent
@@ -22,16 +24,16 @@ class PickleServer(Persistence):
             else transformation.uuid
         rest = '-' + prev_uuid + '-' + transf_uuid + '.dump'
         if prefix == '*':
-            query = self.db + '*' + rest
+            query = self.db + '/*' + rest
             lst = glob(query)
             if len(lst) > 1:
                 raise Exception('Multiple files found:', query, lst)
             if len(lst) == 1:
                 return lst[0]
             else:
-                return self.db + rest
+                return self.db + '/' + rest
         else:
-            return self.db + prefix + rest
+            return self.db + '/' + prefix + rest
 
     def fetch(self, previous_data, transformation=None, fields=None,
               lock=False):
@@ -58,7 +60,7 @@ class PickleServer(Persistence):
 
         # Failed?
         if transformed_data.failure is not None:
-            raise FailedEntryException
+            raise FailedEntryException(transformed_data.failure)
 
         return transformed_data
 
@@ -91,7 +93,8 @@ class PickleServer(Persistence):
 
     def list_by_name(self, substring):
         datas = []
-        for file in glob(self.db + f'*{substring}*-*.dump'):
+        for file in sorted(glob(self.db + f'/*{substring}*-*.dump'),
+                           key=os.path.getmtime):
             data = self._load(file)
             datas.append(data.phantom)
         return datas
@@ -139,3 +142,8 @@ class PickleServer(Persistence):
     #             matrices.append(arg)
     #     for mat in matrices:
     #         del data.__dict__[mat]
+    def unlock(self, previous_data, transformation):
+        filename = self._filename('*', previous_data, transformation)
+        if not Path(filename).exists():
+            raise UnlockedEntryException
+        os.remove(filename)

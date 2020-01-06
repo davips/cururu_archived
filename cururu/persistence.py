@@ -65,12 +65,25 @@ class Persistence(ABC):
     @abstractmethod
     def list_by_name(self, substring):
         """
-        Convenience method to retrieve a list of currently stored Data
-        objects by name.
-        :param substring: part of the name to look for
-        :return: list of empty Data objects, i.e. without matrices
+                Convenience method to retrieve a list of currently stored Data
+        objects by name, ordered cronologically by insertion.
+
+        Parameters
+        ----------
+        substring
+            part of the name to look for
+
+        Returns
+        -------
+        list of empty Data objects, i.e. without matrices
+
         """
         pass
+
+
+class UnlockedEntryException(Exception):
+    """No node locked entry for this input data and transformation
+    combination."""
 
 
 class LockedEntryException(Exception):
