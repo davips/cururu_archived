@@ -1,6 +1,5 @@
 from cururu.amnesia import Amnesia
 from cururu.pickleserver import PickleServer
-from pjdata.data_creation import read_arff
 
 
 class Storer:
@@ -23,9 +22,11 @@ class Storer:
             self.storage = PickleServer(**settings)
         # elif engine == "file":
         #     if settings['path'].endswith('/'):
-        #         raise Exception('Path should not end with /', settings['path'])
+        #         raise Exception('Path should not end with /', settings[
+        #         'path'])
         #     if settings['name'].endswith('arff'):
-        #         self.data = read_arff(settings['path'] + '/' + settings['name'])
+        #         self.data = read_arff(settings['path'] + '/' + settings[
+        #         'name'])
         #     else:
         #         raise Exception('Unrecognized file extension:',
         #                         settings['name'])
