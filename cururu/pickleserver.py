@@ -91,12 +91,13 @@ class PickleServer(Persistence):
 
         self._dump(data, filename)
 
-    def list_by_name(self, substring):
+    def list_by_name(self, substring, only_historyless=True):
         datas = []
         for file in sorted(glob(self.db + f'/*{substring}*-*.dump'),
                            key=os.path.getmtime):
             data = self._load(file)
-            datas.append(data.phantom)
+            if only_historyless and data.history.size == 0:
+                datas.append(data.phantom)
         return datas
 
     def _load(self, filename):

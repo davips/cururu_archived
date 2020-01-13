@@ -63,7 +63,7 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def list_by_name(self, substring):
+    def list_by_name(self, substring, only_historyless=True):
         """
                 Convenience method to retrieve a list of currently stored Data
         objects by name, ordered cronologically by insertion.
@@ -72,6 +72,8 @@ class Persistence(ABC):
         ----------
         substring
             part of the name to look for
+        only_historyless
+            Return only fresh datasets, i.e. Data objects without transformation
 
         Returns
         -------
