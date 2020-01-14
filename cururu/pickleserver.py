@@ -123,6 +123,7 @@ class PickleServer(Persistence):
         """
         if self.speed:
             f = open(filename, 'wb')
+            print(type(data), dir(data))
             pickle.dump(data, f)
             f.close()
         else:
