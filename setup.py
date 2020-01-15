@@ -33,7 +33,7 @@ DOWNLOAD_URL = 'https://github.com/automated-data-science/cururu/releases'
 
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
-               'License :: OSI Approved :: GPL3 License',
+               'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
                'Natural Language :: English',
                'Programming Language :: Python',
                'Topic :: Software Development',
