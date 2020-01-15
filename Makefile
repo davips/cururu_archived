@@ -11,7 +11,7 @@ clean: ## Clean all undesired files such as .so, .pyc, build files and etc.
 	rm -rf docs/_build
 	rm -rf docs/source/generated
 	rm -rf docs/source/auto_examples
-	cd docs ; make clean_all
+	# cd docs ; make clean_all
 
 cl: clean ## Shortcut to clean
 
