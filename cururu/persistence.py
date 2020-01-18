@@ -9,19 +9,15 @@ class Persistence(ABC):
     """
 
     @abstractmethod
-    def store(self, data_in, transformation, fields, data_out, check_dup=True):
+    def store(self, data, fields, check_dup=True):
         """
         Parameters
         ----------
-        data_in
-            Data object before transformation.
-        transformation
-            Transformation object containing the transformer and the stage of
-            transformation (apply/use).
+        data
+            Data object to store.
         fields
-            List of names of the matrices to store.
-        data_out
-            Data object to recover.
+            List of names of the matrices to store (for performance reasons).
+            When None, store them all.
         check_dup
             Whether to waste time checking duplicates
 
@@ -36,18 +32,20 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def fetch(self, data, transformation, fields, lock=False):
+    def fetch(self, data, transformations, fields, lock=False):
         """Fetch data from DB.
 
         Parameters
         ----------
         data
-            Data object before being transformed by a Pipeline
+            Data object before being transformed by a pipeline.
+        transformations
+            List of Transformation objects (transformers + steps).
+            When None, it just grabs the specified fields (useful for filling
+            up PhantomData objects).
         fields
-            List of names of the matrices to fetch.
-        transformation
-            Transformation object containing the transformer and the stage of
-            transformation (apply/use).
+            List of names of the matrices to fetch (for performance reasons).
+            When None, fetch them all.
         lock
             Whether to mark entry (input data and pipeline combination) as
             locked, when no data is found for the entry.
@@ -64,20 +62,22 @@ class Persistence(ABC):
 
     @abstractmethod
     def list_by_name(self, substring, only_historyless=True):
-        """
-                Convenience method to retrieve a list of currently stored Data
+        """Convenience method to retrieve a list of currently stored Data
         objects by name, ordered cronologically by insertion.
+
+        They are PhantomData objects, i.e. empty ones.
 
         Parameters
         ----------
         substring
             part of the name to look for
         only_historyless
-            Return only fresh datasets, i.e. Data objects without transformation
+            When True, return only fresh datasets, i.e. Data objects never
+            transformed before.
 
         Returns
         -------
-        list of empty Data objects, i.e. without matrices
+        List of empty Data objects (PhantomData), i.e. without matrices.
 
         """
         pass
