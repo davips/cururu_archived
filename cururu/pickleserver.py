@@ -1,7 +1,6 @@
 import os
 import traceback
 
-from cururu.compression import unpack_object, pack_object
 from cururu.disk import save, load
 from cururu.persistence import Persistence, LockedEntryException, \
     FailedEntryException, DuplicateEntryException, UnlockedEntryException

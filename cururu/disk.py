@@ -1,4 +1,4 @@
-from cururu.compression import pack_data, unpack_data
+from pjdata.aux.compression import pack_data, unpack_data
 
 
 def save(filename, obj):
