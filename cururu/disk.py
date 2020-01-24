@@ -14,3 +14,10 @@ def load(filename):
     res = unpack_data(f.read())
     f.close()
     return res
+
+
+def save_txt(filename, text):
+    """Save text as a file."""
+    f = open(filename, 'w')
+    f.write(text)
+    f.close()
