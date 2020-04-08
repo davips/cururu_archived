@@ -16,9 +16,9 @@ class PickleServer(Persistence):
         if not Path(db).exists():
             os.mkdir(db)
 
-    def fetch(self, data, fields=None, lock=False):
+    def fetch(self, data, fields=None, training_data_uuid='', lock=False):
         # TODO: deal with fields and missing fields?
-        filename = self._filename('*', data)
+        filename = self._filename('*', data, training_data_uuid)
 
         # Not started yet?
         if not Path(filename).exists():
@@ -41,20 +41,20 @@ class PickleServer(Persistence):
 
         return transformed_data
 
-    def store(self, data, fields=None, check_dup=True):
+    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
         """The dataset name of data_out will be the filename prefix for
         convenience."""
         # TODO: deal with fields and missing fields?
         if fields is None:
             fields = ['X', 'Y']
 
-        filename = self._filename(data.name, data)
+        filename = self._filename(data.name, data, training_data_uuid)
 
         # Already exists?
         if check_dup and Path(filename).exists():
             raise DuplicateEntryException('Already exists:', filename)
 
-        locked = self._filename('', data)
+        locked = self._filename('', data, training_data_uuid)
         if Path(locked).exists():
             os.remove(locked)
 
@@ -69,9 +69,9 @@ class PickleServer(Persistence):
                 datas.append(data.hollow)
         return datas
 
-    def _filename(self, prefix, data):
+    def _filename(self, prefix, data, training_data_uuid=''):
         uuids = [tr.uuid for tr in data.history.transformations]
-        rest = '-' + '-'.join(uuids) + '.dump'
+        rest = f'-{training_data_uuid}-' + '-'.join(uuids) + '.dump'
         if prefix == '*':
             query = self.db + '/*' + rest
             lst = glob(query)
@@ -117,8 +117,8 @@ class PickleServer(Persistence):
         else:
             save(filename, data)
 
-    def unlock(self, data):
-        filename = self._filename('*', data)
+    def unlock(self, data, training_data_uuid=''):
+        filename = self._filename('*', data, training_data_uuid)
         if not Path(filename).exists():
             raise UnlockedEntryException
         os.remove(filename)
