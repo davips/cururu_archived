@@ -16,9 +16,9 @@ class PickleServer(Persistence):
         if not Path(db).exists():
             os.mkdir(db)
 
-    def fetch(self, data, transformations=None, fields=None, lock=False):
+    def fetch(self, data, fields=None, lock=False):
         # TODO: deal with fields and missing fields?
-        filename = self._filename('*', data, transformations)
+        filename = self._filename('*', data)
 
         # Not started yet?
         if not Path(filename).exists():
@@ -41,49 +41,37 @@ class PickleServer(Persistence):
 
         return transformed_data
 
-    def store(self, data, previous_data=None, transformations=None, fields=None,
-              check_dup=True):
+    def store(self, data, fields=None, check_dup=True):
         """The dataset name of data_out will be the filename prefix for
         convenience."""
         # TODO: deal with fields and missing fields?
-        if bool(previous_data) != bool(transformations):
-            raise Exception('It is not possible to store data with '
-                            'previous_data, but without transformation - '
-                            'and vice-versa!')
-        if previous_data is None:
-            previous_data = data
         if fields is None:
             fields = ['X', 'Y']
 
-        filename = self._filename(data.dataset.name,
-                                  previous_data, transformations)
+        filename = self._filename(data.name, data)
 
         # Already exists?
         if check_dup and Path(filename).exists():
             raise DuplicateEntryException('Already exists:', filename)
 
-        locked = self._filename('', previous_data, transformations)
+        locked = self._filename('', data)
         if Path(locked).exists():
             os.remove(locked)
 
         self._dump(data, filename)
 
-    def list_by_name(self, substring, only_historyless=True):
+    def list_by_name(self, substring, only_original=True):
         datas = []
-        for file in sorted(glob(self.db + f'/*{substring}*-*.dump'),
-                           key=os.path.getmtime):
+        path = self.db + f'/*{substring}*-*.dump'
+        for file in sorted(glob(path), key=os.path.getmtime):
             data = self._load(file)
-            if only_historyless and data.history.size == 0:
-                datas.append(data.phantom)
+            if only_original and data.history.size == 1:
+                datas.append(data.hollow)
         return datas
 
-    def _filename(self, prefix, data, transformation):
-        # TODO: move NoThing uuids to parent
-        prev_uuid = 'DØØØØØØØØØØØØØØØØØØ0' if data is None \
-            else data.uuid
-        transf_uuid = 'TØØØØØØØØØØØØØØØØØØ0' if transformation is None \
-            else transformation.uuid
-        rest = '-' + prev_uuid + '-' + transf_uuid + '.dump'
+    def _filename(self, prefix, data):
+        uuids = [tr.uuid for tr in data.history.transformations]
+        rest = '-' + '-'.join(uuids) + '.dump'
         if prefix == '*':
             query = self.db + '/*' + rest
             lst = glob(query)
@@ -129,23 +117,8 @@ class PickleServer(Persistence):
         else:
             save(filename, data)
 
-    # Obsolete since we can use Data.phantom
-    # @staticmethod
-    # def _erase(data):
-    #     """
-    #     Remove matrices from Data.
-    #     Keep identity.
-    #     :param data:
-    #     :return:
-    #     """
-    #     matrices = []
-    #     for arg in data.__dict__:
-    #         if len(arg) == 1:
-    #             matrices.append(arg)
-    #     for mat in matrices:
-    #         del data.__dict__[mat]
-    def unlock(self, previous_data, transformation):
-        filename = self._filename('*', previous_data, transformation)
+    def unlock(self, data):
+        filename = self._filename('*', data)
         if not Path(filename).exists():
             raise UnlockedEntryException
         os.remove(filename)

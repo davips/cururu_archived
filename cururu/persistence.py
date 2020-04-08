@@ -32,7 +32,7 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def fetch(self, data, transformations, fields, lock=False):
+    def fetch(self, data, fields, lock=False):
         """Fetch data from DB.
 
         Parameters
