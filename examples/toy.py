@@ -23,6 +23,8 @@ except DuplicateEntryException:
 lst = PickleServer().list_by_name('iris')
 for phantom in lst:
     print(phantom)
+    print('Fetching Xd...')
+    print(PickleServer().fetch(phantom, fields=['Xd', 'Y']).Xd)
 
 # Testes            ############################
 data = Data(X=np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),
