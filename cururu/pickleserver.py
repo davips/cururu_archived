@@ -18,7 +18,7 @@ class PickleServer(Persistence):
 
     def fetch(self, data, fields=None, training_data_uuid='', lock=False):
         # TODO: deal with fields and missing fields?
-        filename = self._filename('*', data, training_data_uuid)
+        filename = self._filename(data.name, data, training_data_uuid)
 
         # Not started yet?
         if not Path(filename).exists():
@@ -70,7 +70,7 @@ class PickleServer(Persistence):
         return datas
 
     def _filename(self, prefix, data, training_data_uuid=''):
-        uuids = [tr.uuid for tr in data.history.transformations]
+        uuids = [tr.sid for tr in data.history.transformations]
         rest = f'-{training_data_uuid}-' + '-'.join(uuids) + '.dump'
         if prefix == '*':
             query = self.db + '/*' + rest
@@ -110,6 +110,7 @@ class PickleServer(Persistence):
         :param filename: file dataset
         :return: None
         """
+        print('W: Storing...', filename)
         if self.speed:
             f = open(filename, 'wb')
             pickle.dump(data, f)
@@ -121,4 +122,5 @@ class PickleServer(Persistence):
         filename = self._filename('*', data, training_data_uuid)
         if not Path(filename).exists():
             raise UnlockedEntryException
+        print('W: Unlocking...', filename)
         os.remove(filename)
