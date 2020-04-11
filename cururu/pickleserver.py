@@ -18,7 +18,7 @@ class PickleServer(Persistence):
 
     def fetch(self, data, fields=None, training_data_uuid='', lock=False):
         # TODO: deal with fields and missing fields?
-        filename = self._filename(data.name, data, training_data_uuid)
+        filename = self._filename('*', data, training_data_uuid)
 
         # Not started yet?
         if not Path(filename).exists():
@@ -31,7 +31,7 @@ class PickleServer(Persistence):
         # Locked?
         if Path(filename).stat().st_size == 0:
             print('W: Previously locked by other process.', filename)
-            raise LockedEntryException
+            raise LockedEntryException(filename)
 
         transformed_data = self._load(filename)
 
@@ -121,6 +121,7 @@ class PickleServer(Persistence):
     def unlock(self, data, training_data_uuid=''):
         filename = self._filename('*', data, training_data_uuid)
         if not Path(filename).exists():
-            raise UnlockedEntryException
+            raise UnlockedEntryException('Cannot unlock something that is not '
+                                         'locked!', filename)
         print('W: Unlocking...', filename)
         os.remove(filename)
