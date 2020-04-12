@@ -11,14 +11,15 @@ from glob import glob
 
 class PickleServer(Persistence):
     def __init__(self, db='/tmp/cururu', optimize='speed'):
+        super().__init__()
         self.db = db
         self.speed = optimize == 'speed'  # vs 'space'
         if not Path(db).exists():
             os.mkdir(db)
 
-    def fetch(self, data, fields=None, training_data_uuid='', lock=False):
+    def fetch(self, hollow_data, fields=None, training_data_uuid='', lock=False):
         # TODO: deal with fields and missing fields?
-        filename = self._filename('*', data, training_data_uuid)
+        filename = self._filename('*', hollow_data, training_data_uuid)
 
         # Not started yet?
         if not Path(filename).exists():
@@ -41,7 +42,7 @@ class PickleServer(Persistence):
 
         return transformed_data
 
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def _store_impl(self, data, fields, training_data_uuid, check_dup):
         """The dataset name of data_out will be the filename prefix for
         convenience."""
         # TODO: deal with fields and missing fields?

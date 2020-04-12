@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+from functools import partial
+
+from cururu.worker import Worker
 
 
 class Persistence(ABC):
@@ -8,11 +11,20 @@ class Persistence(ABC):
      SQLite, remote/local MongoDB, MySQL server, pickled or even CSV files.
     """
 
+    def __init__(self):
+        self.worker = Worker()
+
     @abstractmethod
-    def store(self, data, fields, check_dup=True):
+    def _store_impl(self, data, fields, training_data_uuid, check_dup):
+        pass
+
+    def store(self, data, fields=None, training_data_uuid='', check_dup=True,
+              blocking=False):
         """
         Parameters
         ----------
+        blocking
+        training_data_uuid
         data
             Data object to store.
         fields
@@ -29,20 +41,23 @@ class Persistence(ABC):
         ---------
         DuplicateEntryException
         """
-        pass
+        if not blocking:
+            f = partial(
+                self._store_impl,
+                data, fields, training_data_uuid, check_dup
+            )
+            self.worker.put(f)
+        else:
+            self._store_impl(data, fields, training_data_uuid, check_dup)
 
     @abstractmethod
-    def fetch(self, data, fields, lock=False):
+    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         """Fetch data from DB.
 
         Parameters
         ----------
-        data
+        hollow_data
             Data object before being transformed by a pipeline.
-        transformations
-            List of Transformation objects (transformers + steps).
-            When None, it just grabs the specified fields (useful for filling
-            up PhantomData objects).
         fields
             List of names of the matrices to fetch (for performance reasons).
             When None, fetch them all.
@@ -57,6 +72,7 @@ class Persistence(ABC):
         Exception
         ---------
         LockedEntryException, FailedEntryException
+        :param training_data_uuid:
         """
         pass
 

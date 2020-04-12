@@ -5,8 +5,8 @@ class Amnesia(Persistence):
     def list_by_name(self, substring, only_historyless=True):
         return []
 
-    def store(self, data, fields, check_dup=True):
+    def _store_impl(self, data, fields, training_data_uuid, check_dup):
         return None
 
-    def fetch(self, data, fields, transformation=None, lock=False):
+    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         return None
