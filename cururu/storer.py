@@ -5,21 +5,17 @@ from cururu.pickleserver import PickleServer
 class Storer:
     """Trait/mixin providing storage configuration."""
 
-    def _set_storage(self, engine, settings):
+    def _set_storage(self, engine, settings, blocking):
         if engine == "amnesia":
             self.storage = Amnesia()
         elif engine == "mysql":
             from cururu.mysql import MySQL
-            self.storage = MySQL(**settings)
+            self.storage = MySQL(blocking=blocking, **settings)
         elif engine == "sqlite":
             from cururu.sqlite import SQLite
-            self.storage = SQLite(**settings)
-        elif engine == "cachedmysql":
-            from cururu.mysql import MySQL
-            from cururu.sqlite import SQLite
-            self.storage = MySQL(db=settings['db'], nested=SQLite())
+            self.storage = SQLite(blocking=blocking, **settings)
         elif engine == "dump":
-            self.storage = PickleServer(**settings)
+            self.storage = PickleServer(blocking=blocking, **settings)
         # elif engine == "file":
         #     if settings['path'].endswith('/'):
         #         raise Exception('Path should not end with /', settings[

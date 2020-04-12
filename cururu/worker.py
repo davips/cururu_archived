@@ -7,17 +7,18 @@ from time import sleep
 
 @dataclass
 class Worker:
-    timeout: float = 0.050
-    sleep: float = 0.005
+    timeout: float = 1
+    sleep: float = 0.01
 
     def __post_init__(self):
         self.queue = Queue()
-        self.new()
+        self.running = False
 
     def worker(self):
         time_left = self.timeout
         while time_left > 0:
             if self.queue.empty():
+                # print('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV')
                 sleep(self.sleep)
                 time_left -= self.sleep
             else:

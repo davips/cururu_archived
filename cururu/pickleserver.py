@@ -10,8 +10,8 @@ from glob import glob
 
 
 class PickleServer(Persistence):
-    def __init__(self, db='/tmp/cururu', optimize='speed'):
-        super().__init__()
+    def __init__(self, db='/tmp/cururu', optimize='speed', blocking=False):
+        super().__init__(blocking=blocking)
         self.db = db
         self.speed = optimize == 'speed'  # vs 'space'
         if not Path(db).exists():
