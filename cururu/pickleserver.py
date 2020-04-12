@@ -1,5 +1,6 @@
 import os
 import traceback
+from time import sleep
 
 from cururu.disk import save, load
 from cururu.persistence import Persistence, LockedEntryException, \
@@ -50,6 +51,7 @@ class PickleServer(Persistence):
             fields = ['X', 'Y']
 
         filename = self._filename(data.name, data, training_data_uuid)
+        # sleep(0.020)  # Latency simulator.
 
         # Already exists?
         if check_dup and Path(filename).exists():
@@ -72,7 +74,8 @@ class PickleServer(Persistence):
 
     def _filename(self, prefix, data, training_data_uuid=''):
         uuids = [tr.sid for tr in data.history.transformations]
-        rest = f'-{training_data_uuid}-' + '-'.join(uuids) + '.dump'
+        rest = f'-{training_data_uuid}-' + '-'.join(uuids) + \
+               f'.{self.speed}.dump'
         if prefix == '*':
             query = self.db + '/*' + rest
             lst = glob(query)

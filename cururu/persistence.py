@@ -1,19 +1,20 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from functools import partial
 
 from cururu.worker import Worker
 
 
-@dataclass
 class Persistence(ABC):
     """
     This class stores and recovers results from some place.
     The children classes are expected to provide storage in e.g.:
      SQLite, remote/local MongoDB, MySQL server, pickled or even CSV files.
     """
-    blocking: bool = False
+
     worker = Worker()  # Global state !
+
+    def __init__(self, blocking=False):
+        self.blocking = blocking
 
     @abstractmethod
     def _store_impl(self, data, fields, training_data_uuid, check_dup):

@@ -7,8 +7,8 @@ from time import sleep
 
 @dataclass
 class Worker:
-    timeout: float = 1
-    sleep: float = 0.01
+    timeout: float = 0.25
+    sleep: float = 0.05
 
     def __post_init__(self):
         self.queue = Queue()
