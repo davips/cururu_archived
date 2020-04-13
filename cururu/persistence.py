@@ -13,8 +13,8 @@ class Persistence(ABC):
 
     worker = Worker()  # Global state !
 
-    def __init__(self, blocking=False):
-        self.blocking = blocking
+    def __init__(self, execution='process'):
+        self.execution = execution
 
     @abstractmethod
     def _store_impl(self, data, fields, training_data_uuid, check_dup):
@@ -42,7 +42,7 @@ class Persistence(ABC):
         ---------
         DuplicateEntryException
         """
-        if not self.blocking:
+        if not self.execution:
             f = partial(
                 self._store_impl,
                 data, fields, training_data_uuid, check_dup

@@ -29,6 +29,11 @@ class Worker:
         if self.lock.acquire(False):
             self._new()
 
+    def join(self):
+        """Wait for the last task to end. Calling this method is optional."""
+        self.lock.acquire()
+        self.lock.release()
+
     def _new(self):
         thread = self.klass(target=self._worker, daemon=False)
         thread.start()
