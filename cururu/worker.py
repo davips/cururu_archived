@@ -1,39 +1,43 @@
 from dataclasses import dataclass
-from queue import Queue
-from threading import Thread
-
-from time import sleep
+from multiprocessing import Queue
+from queue import Empty
 
 
 @dataclass
 class Worker:
+    """Intended to get IO out of the way,
+    so storing of results doesn't affect the execution time."""
     timeout: float = 0.25
-    sleep: float = 0.05
+    parallel: bool = False
 
     def __post_init__(self):
         self.queue = Queue()
-        self.running = False
+        if self.parallel:
+            import multiprocessing
+            self.lock = multiprocessing.Lock()
+            self.klass = multiprocessing.Process
+        else:
+            import threading
+            self.lock = threading.Lock()
+            self.klass = threading.Thread
 
-    def worker(self):
-        time_left = self.timeout
-        while time_left > 0:
-            if self.queue.empty():
-                # print('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV')
-                sleep(self.sleep)
-                time_left -= self.sleep
-            else:
-                time_left = self.timeout
-                f = self.queue.get(timeout=35555555)
-                f()
-                self.queue.task_done()
-        self.running = False
+    def put(self, function):
+        """Add a new function to the queue to be executed."""
+        self.queue.put(function)
 
-    def put(self, item):
-        self.queue.put(item)
-        if not self.running:
-            self.new()
+        # Creates a new thread if there is none alive.
+        if self.lock.acquire(False):
+            self._new()
 
-    def new(self):
-        self.thread = Thread(target=self.worker)
-        self.running = True
-        self.thread.start()
+    def _new(self):
+        thread = self.klass(target=self._worker, daemon=False)
+        thread.start()
+
+    def _worker(self):
+        while True:
+            try:
+                function = self.queue.get(timeout=self.timeout)
+                function()
+            except Empty:
+                break
+        self.lock.release()

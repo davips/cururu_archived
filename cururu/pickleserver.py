@@ -14,6 +14,7 @@ class PickleServer(Persistence):
     def __init__(self, db='/tmp/cururu', optimize='speed', blocking=False):
         super().__init__(blocking=blocking)
         self.db = db
+        self.optimize = optimize
         self.speed = optimize == 'speed'  # vs 'space'
         if not Path(db).exists():
             os.mkdir(db)
@@ -75,7 +76,7 @@ class PickleServer(Persistence):
     def _filename(self, prefix, data, training_data_uuid=''):
         uuids = [tr.sid for tr in data.history.transformations]
         rest = f'-{training_data_uuid}-' + '-'.join(uuids) + \
-               f'.{self.speed}.dump'
+               f'.{self.optimize}.dump'
         if prefix == '*':
             query = self.db + '/*' + rest
             lst = glob(query)
