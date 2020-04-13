@@ -11,8 +11,8 @@ from glob import glob
 
 
 class PickleServer(Persistence):
-    def __init__(self, db='/tmp/cururu', optimize='speed', execution='process'):
-        super().__init__(execution=execution)
+    def __init__(self, db='/tmp/cururu', optimize='speed', blocking=False):
+        super().__init__(blocking=blocking)
         self.db = db
         self.optimize = optimize
         self.speed = optimize == 'speed'  # vs 'space'
