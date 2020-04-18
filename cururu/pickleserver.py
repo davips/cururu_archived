@@ -51,7 +51,10 @@ class PickleServer(Persistence):
         if fields is None:
             fields = ['X', 'Y']
 
-        filename = self._filename(data.name, data, training_data_uuid)
+        # TODO: reput name on Data?
+        filename = self._filename('name', data, training_data_uuid)
+        # filename = self._filename(data.name, data, training_data_uuid)
+
         # sleep(0.020)  # Latency simulator.
 
         # Already exists?
@@ -74,7 +77,7 @@ class PickleServer(Persistence):
         return datas
 
     def _filename(self, prefix, data, training_data_uuid=''):
-        uuids = [tr.sid for tr in data.history.transformations]
+        uuids = [tr.sid for tr in data.history]
         rest = f'-{training_data_uuid}-' + '-'.join(uuids) + \
                f'.{self.optimize}.dump'
         if prefix == '*':
