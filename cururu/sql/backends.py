@@ -48,4 +48,4 @@ class SQLite(SQL):
         super().__init__(blocking=blocking)
 
 
-sqlite = SQLite()
+# sqlite = SQLite()
