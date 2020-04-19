@@ -34,7 +34,6 @@ class Storer:
             return NonBlocking(
                 setup=backend, setup_kwargs=kwargs, multiprocess=multiprocess
             )
-        print(engine, db)
 
         if engine == "amnesia":
             worker = create_worker(Amnesia, kwargs={})

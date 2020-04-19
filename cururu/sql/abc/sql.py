@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, LargeBinary, CHAR, \
     VARCHAR
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy_utils import database_exists, create_database
 
 from cururu.persistence import Persistence
 
@@ -9,6 +10,8 @@ class SQL(Persistence):
     engine = None
 
     def __init__(self):
+        if not database_exists(self.engine.url):
+            create_database(self.engine.url)
         Base = declarative_base(cls=CururuBase)
 
         class Data(Base):
