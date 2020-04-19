@@ -1,6 +1,5 @@
 import sqlalchemy as sa
 from sqlalchemy import event
-from sqlalchemy.ext.declarative import declarative_base
 
 from cururu.sql.abc.sql import SQL
 
@@ -47,5 +46,3 @@ class SQLite(SQL):
             conn.execute("BEGIN")
 
         super().__init__()
-
-# sqlite = SQLite()
