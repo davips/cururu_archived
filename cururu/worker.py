@@ -1,17 +1,25 @@
-from dataclasses import dataclass
-from multiprocessing import Queue
-from queue import Empty
 import multiprocessing
 import threading
+from dataclasses import dataclass, field
+from multiprocessing import Queue
+from multiprocessing import JoinableQueue
+from queue import Empty
+
+
+class Nothing(type):
+    """Singleton"""
 
 
 @dataclass
 class Worker:
     """Intended to get IO out of the way,
     so storing of results doesn't affect the execution time."""
+    setup: type = None
+    setup_kwargs: dict = field(default_factory=dict)
     multiprocess: bool = False
     timeout: float = 0.1  # Time spent hoping the thread will be useful again.
     queue = Queue()
+    outqueue = JoinableQueue()
     process_lock = multiprocessing.Lock()
     thread_lock = threading.Lock()
 
@@ -44,10 +52,29 @@ class Worker:
         thread.start()
 
     def _worker(self):
+        setup = self.setup(**self.setup_kwargs) if self.setup else None
         while True:
             try:
-                function = self.queue.get(timeout=self.timeout)
-                function()
+                function, kwargs = self.queue.get(timeout=self.timeout)
+                if setup is None:
+                    ret = function(**kwargs)
+                else:
+                    print('full setargs')
+                    ret = function(setup, **kwargs)
+                if ret is not Nothing:
+                    print('   guarda')
+                    self.outqueue.put(ret)
+                    print('    guardou, aguarda tirar')
+                    self.outqueue.join()
+                    print('    joined')
             except Empty:
+                print('  vazia')
                 break
+        print('    reelasing')
         self.lock.release()
+        print('    released')
+
+    def updated(self, setup, setup_kwargs, multiprocess):
+        self.setup = setup
+        self.setup_kwargs = setup_kwargs
+        self.multiprocess = multiprocess

@@ -8,8 +8,7 @@ from cururu.persistence import Persistence
 class SQL(Persistence):
     engine = None
 
-    def __init__(self, blocking=False):
-        super().__init__(blocking=blocking)
+    def __init__(self):
         Base = declarative_base(cls=CururuBase)
 
         class Data(Base):
@@ -22,11 +21,11 @@ class SQL(Persistence):
 
         Base.metadata.create_all(self.engine)
 
-    def _store_impl(self, data, fields, training_data_uuid, check_dup):
+    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
         pass
 
     def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
-        pass
+        return None
 
     def list_by_name(self, substring, only_historyless=True):
         pass

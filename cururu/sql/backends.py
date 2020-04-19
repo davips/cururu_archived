@@ -6,19 +6,18 @@ from cururu.sql.abc.sql import SQL
 
 
 class MySQL(SQL):
-
-    def __init__(self, url='user:pass@ip/db', blocking=False):
-        if '-' in url:
+    def __init__(self, db='user:pass@ip/db'):
+        if '-' in db:
             raise Exception("'-' not allowed in url!")  # because of db name
         # TIP: latin1 is to ensure 1 byte per char when storing UUIDs.
-        self.engine = sa.create_engine('mysql+pymysql://' + url,
+        self.engine = sa.create_engine('mysql+pymysql://' + db,
                                        encoding='latin1',
                                        pool_recycle=3600, echo=True)
-        super().__init__(blocking=blocking)
+        super().__init__()
 
 
 class SQLite(SQL):
-    def __init__(self, db='/tmp/cururu.db', blocking=False):
+    def __init__(self, db='/tmp/cururu'):
         """
 
         Parameters
@@ -29,6 +28,8 @@ class SQLite(SQL):
         """
         if db == '':
             db = ':memory:'
+        else:
+            db += '.db'
         # TIP: latin1 is to ensure 1 byte per char when storing UUIDs.
         self.engine = sa.create_engine('sqlite:///' + db, encoding='latin1',
                                        echo=True)
@@ -45,7 +46,6 @@ class SQLite(SQL):
             # emit our own BEGIN
             conn.execute("BEGIN")
 
-        super().__init__(blocking=blocking)
-
+        super().__init__()
 
 # sqlite = SQLite()

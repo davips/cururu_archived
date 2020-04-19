@@ -1,30 +1,54 @@
+from dataclasses import dataclass
+
 from cururu.amnesia import Amnesia
 from cururu.pickleserver import PickleServer
+from cururu.nonblocking import NonBlocking
 
 
+@dataclass
 class Storer:
-    """Trait/mixin providing storage configuration."""
+    """Manage threads for storage backends."""
+    # WARN: Global state!
+    workers = {}
 
-    def _set_storage(self, engine, settings, blocking):
+    @classmethod
+    def get(cls, engine, db, settings, blocking, multiprocess=False):
+        """Get an active connection or create a new one if needed."""
+        return cls.workers.get(
+            engine,
+            cls.factory(engine, db, settings, blocking, multiprocess)
+        )
+
+    @classmethod
+    def factory(cls, engine, db, settings, blocking, multiprocess=False):
+        """Create a new connection."""
+        #  TIP: imports are hidden to avoid errors due to missing pip packages
+        setup_kwargs = {'db': db}
+        setup_kwargs.update(settings)
+
+        def create_worker(backend, kwargs=None):
+            if kwargs is None:
+                kwargs = setup_kwargs
+            if blocking:
+                return backend(**kwargs)
+            return NonBlocking(
+                setup=backend, setup_kwargs=kwargs, multiprocess=multiprocess
+            )
+        print(engine, db)
+
         if engine == "amnesia":
-            self.storage = Amnesia()
+            worker = create_worker(Amnesia, kwargs={})
         elif engine == "mysql":
-            from cururu.mysql import MySQL
-            self.storage = MySQL(blocking=blocking, **settings)
+            from cururu.sql.backends import MySQL
+            # TODO: does mysql already have extra settings now?
+            worker = create_worker(MySQL)
         elif engine == "sqlite":
-            from cururu.sqlite import SQLite
-            self.storage = SQLite(blocking=blocking, **settings)
+            from cururu.sql.backends import SQLite
+            worker = create_worker(SQLite)
         elif engine == "dump":
-            self.storage = PickleServer(blocking=blocking, **settings)
-        # elif engine == "file":
-        #     if settings['path'].endswith('/'):
-        #         raise Exception('Path should not end with /', settings[
-        #         'path'])
-        #     if settings['name'].endswith('arff'):
-        #         self.data = read_arff(settings['path'] + '/' + settings[
-        #         'name'])
-        #     else:
-        #         raise Exception('Unrecognized file extension:',
-        #                         settings['name'])
+            worker = create_worker(PickleServer)
         else:
             raise Exception('Unknown engine:', engine)
+
+        cls.workers[engine] = worker
+        return worker
