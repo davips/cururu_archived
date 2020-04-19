@@ -1,10 +1,10 @@
 import sqlalchemy as sa
 from sqlalchemy import event
 
-from cururu.sql.abc.sql import SQL
+from cururu.sql.abc.sqla import SQLA
 
 
-class MySQL(SQL):
+class MySQLA(SQLA):
     def __init__(self, db='user:pass@ip/db'):
         if '-' in db:
             raise Exception("'-' not allowed in url!")  # because of db name
@@ -15,7 +15,7 @@ class MySQL(SQL):
         super().__init__()
 
 
-class SQLite(SQL):
+class SQLite(SQLA):
     def __init__(self, db='/tmp/cururu'):
         """
 

@@ -38,9 +38,9 @@ class Storer:
         if engine == "amnesia":
             worker = create_worker(Amnesia, kwargs={})
         elif engine == "mysql":
-            from cururu.sql.backends import MySQL
+            from cururu.sql.backends import MySQLA
             # TODO: does mysql already have extra settings now?
-            worker = create_worker(MySQL)
+            worker = create_worker(MySQLA)
         elif engine == "sqlite":
             from cururu.sql.backends import SQLite
             worker = create_worker(SQLite)

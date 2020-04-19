@@ -17,13 +17,14 @@ class Worker:
     setup: type = None
     setup_kwargs: dict = field(default_factory=dict)
     multiprocess: bool = False
-    timeout: float = 0.1  # Time spent hoping the thread will be useful again.
+    timeout: float = 2  # Time spent hoping the thread will be useful again.
     queue = Queue()
     outqueue = JoinableQueue()
     process_lock = multiprocessing.Lock()
     thread_lock = threading.Lock()
 
     def __post_init__(self):
+        print('new worker......................................')
         if self.multiprocess:
             self.lock = self.process_lock
             self.klass = multiprocessing.Process
@@ -48,7 +49,6 @@ class Worker:
         cls.thread_lock.release()
 
     def _new(self):
-        print('new thread!!!!!!!!!!!!')
         thread = self.klass(target=self._worker, daemon=False)
         thread.start()
 
