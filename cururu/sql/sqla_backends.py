@@ -15,7 +15,7 @@ class MySQLA(SQLA):
         super().__init__()
 
 
-class SQLite(SQLA):
+class SQLiteA(SQLA):
     def __init__(self, db='/tmp/cururu'):
         """
 

@@ -38,12 +38,19 @@ class Storer:
         if engine == "amnesia":
             worker = create_worker(Amnesia, kwargs={})
         elif engine == "mysql":
+            from cururu.sql.mysql import MySQL
+            # TODO: does mysql already have extra settings now?
+            worker = create_worker(MySQL)
+        elif engine == "sqlite":
+            from cururu.sql.sqlite import SQLite
+            worker = create_worker(SQLite)
+        elif engine == "mysqla":
             from cururu.sql.sqla_backends import MySQLA
             # TODO: does mysql already have extra settings now?
             worker = create_worker(MySQLA)
-        elif engine == "sqlite":
-            from cururu.sql.sqla_backends import SQLite
-            worker = create_worker(SQLite)
+        elif engine == "sqlitea":
+            from cururu.sql.sqla_backends import SQLiteA
+            worker = create_worker(SQLiteA)
         elif engine == "dump":
             worker = create_worker(PickleServer)
         else:
