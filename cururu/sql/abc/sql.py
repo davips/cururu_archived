@@ -93,7 +93,9 @@ class SQL(Persistence):
 
         # Create Data. TODO: recover history from dump
         history = []
-        uuids = {name_by_muuid[muuid]: UUID(muuid) for muuid in muuids}
+        uuids = {
+            name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
+        }
         data = Data(_uuid=uuid, _uuids=uuids, _history=history, _failure=None,
                     **matrices_by_name)
 
