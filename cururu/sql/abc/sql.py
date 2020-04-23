@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Optional
 
 from cururu.persistence import Persistence, DuplicateEntryException
-from pjdata.aux.compression import unpack_data
+from pjdata.aux.compression import unpack, pack
 from pjdata.aux.encoders import UUID
 from pjdata.data import Data
 
@@ -40,6 +40,10 @@ class SQL(Persistence):
             if u.pretty not in stored_hashes:
                 self.store_dump(u.pretty, data.field_dump(name))
 
+        # Insert history.  #TODO: would a transaction be faster here?
+        for transf in data.history:
+            self.store_dump(transf.uuid00, pack(transf.serialized))
+
         # Create row at table 'data'. ---------------------
         sql = f'insert into data values (NULL, ?, ?, ?, ?, NULL)'
         data_args = [uuid,
@@ -50,10 +54,11 @@ class SQL(Persistence):
         from pymysql import IntegrityError as IntegrityErrorMySQL
         # try:
         self.query(sql, data_args)
-            # unfortunately,
-            # it seems that FKs generate the same exception as reinsertion.
-            # so, missing FKs might not be detected here.
-            # not a worrying issue whatsoever.
+        # unfortunately,
+        # it seems that FKs generate the same exception as reinsertion.
+        # so, missing FKs might not be detected here.
+        # not a worrying issue whatsoever.
+        # TODO: it seems to be capturing errors other these here:
         # except IntegrityErrorSQLite as e:
         #     print(f'Unexpected: Data already stored before!', uuid)
         # except IntegrityErrorMySQL as e:
@@ -72,37 +77,40 @@ class SQL(Persistence):
         names = result['names'].split(',')
         muuids = result['matrices'].split(',')
         huuids = result['history'].split(',')
-        # mat_hashes_by_name = {
-        #     name: mat_hash for name, mat_hash in zip(names, mat_ids)
-        # }
+
         name_by_muuid = {muuid: name for muuid, name in zip(muuids, names)}
 
-        # Fetch matrices.
+        # Fetch matrices and history.
         # TODO: postpone fetching to LazyData, or bring only the needed ones.
         # TODO: where is failure stored??
-        qmarks = ','.join(['?'] * len(muuids))
-        self.query(f'select id,value from dump where id in ({qmarks})',
-                   muuids)
-        rall = self.get_all()
-        matrices_by_muuid = {
-            row['id']: unpack_data(row['value']) for row in rall
-        }
+        matrices_by_muuid = self.fetch_dumps(muuids)
         matrices_by_name = {
             name_by_muuid[muuid]: matrices_by_muuid[muuid] for muuid in muuids
         }
 
-        # Create Data. TODO: recover history from dump
-        history = []
+        # Create Data.
+        history = list(self.fetch_dumps(huuids).values())
+        print('hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh',history)
         uuids = {
             name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
         }
         data = Data(_uuid=uuid, _uuids=uuids, _history=history, _failure=None,
                     **matrices_by_name)
 
-        # TODO: Opção1: Allow matrices inside Hollow, just to take advantage
-        #  of the untouched matrices. opção2: o cache cuida disso.
+        # TODO: How to populate data with nonchanged fields from input_data?
+        #  Opção1: Allow matrices inside Hollow, just to take advantage
+        #  of the untouched matrices.
+        #  opção2: o cache cuida disso.
         #  opção3: cururu recebe inputdata
+        #  Em qualquer das soluções, basta checar presença e uuid da matriz
+        #  no input_data para saber a atualidade.
         return data
+
+    def fetch_dumps(self, uuids):
+        qmarks = ','.join(['?'] * len(uuids))
+        self.query(f'select id,value from dump where id in ({qmarks})', uuids)
+        rall = self.get_all()
+        return {row['id']: unpack(row['value']) for row in rall}
 
     def list_by_name(self, substring, only_historyless=True):
         pass
