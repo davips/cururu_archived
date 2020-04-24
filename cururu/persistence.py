@@ -81,6 +81,10 @@ class Persistence(ABC):
         """
         pass
 
+    @abstractmethod
+    def unlock(self, hollow_data, training_data_uuid=None):
+        pass
+
 
 class UnlockedEntryException(Exception):
     """No node locked entry for this input data and transformation

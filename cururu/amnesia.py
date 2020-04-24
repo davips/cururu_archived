@@ -6,7 +6,7 @@ class Amnesia(Persistence):
         return []
 
     def store(self, data, fields=None, training_data_uuid='', check_dup=True):
-        return None
+        pass
 
     def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         return None

@@ -18,6 +18,10 @@ class NonBlocking(Persistence):
     def _fetch(backend, **kwargs):
         return backend.fetch(**kwargs)
 
+    @staticmethod
+    def _unlock(backend):
+        return backend.unlock()
+
     def store(self, data, fields=None, training_data_uuid='', check_dup=True):
         kwargs = locals().copy()
         del kwargs['self']
@@ -30,6 +34,9 @@ class NonBlocking(Persistence):
         ret = self.worker.outqueue.get()
         self.worker.outqueue.task_done()
         return ret
+
+    def unlock(self, hollow_data, training_data_uuid=None):
+        self.worker.put(self._unlock)
 
     def list_by_name(self, substring, only_historyless=True):
         pass

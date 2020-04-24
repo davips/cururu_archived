@@ -7,8 +7,9 @@ from cururu.sql.abc.sql import SQL
 
 
 class MySQL(SQL):
-    def __init__(self, server='user:pass@ip', db='curumim',
-                 debug=False, read_only=False):
+    def __init__(self, db='user:pass@ip/db', debug=False, read_only=False):
+        server = db.split('/')[0]
+        db = db.split('/')[1]
         self.info = server + ', ' + db
         self.read_only = read_only
         self.database = server

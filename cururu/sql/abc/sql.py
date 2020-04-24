@@ -2,7 +2,8 @@ import warnings
 from abc import abstractmethod
 from typing import Optional
 
-from cururu.persistence import Persistence, DuplicateEntryException
+from cururu.persistence import Persistence, DuplicateEntryException, \
+    UnlockedEntryException
 from pjdata.aux.compression import unpack, pack
 from pjdata.aux.encoders import UUID
 from pjdata.data import Data
@@ -42,7 +43,7 @@ class SQL(Persistence):
 
         # Insert history.  #TODO: would a transaction be faster here?
         for transf in data.history:
-            self.store_dump(transf.uuid00, pack(transf.serialized))
+            self.store_dump(transf.uuid00.pretty, pack(transf.serialized))
 
         # Create row at table 'data'. ---------------------
         sql = f'insert into data values (NULL, ?, ?, ?, ?, NULL)'
@@ -90,7 +91,7 @@ class SQL(Persistence):
 
         # Create Data.
         history = list(self.fetch_dumps(huuids).values())
-        print('hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh',history)
+        print('hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh', history)
         uuids = {
             name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
         }
@@ -104,6 +105,9 @@ class SQL(Persistence):
         #  opção3: cururu recebe inputdata
         #  Em qualquer das soluções, basta checar presença e uuid da matriz
         #  no input_data para saber a atualidade.
+        #  Opção4 melhor: HollowData pode virar MockData, permitindo matriz.
+        #       Pra fins de fetchbylist, pode ser usado o próprio Data se a
+        #       implementação passar a ser lazy. (ORM-like behavior)
         return data
 
     def fetch_dumps(self, uuids):
@@ -111,6 +115,12 @@ class SQL(Persistence):
         self.query(f'select id,value from dump where id in ({qmarks})', uuids)
         rall = self.get_all()
         return {row['id']: unpack(row['value']) for row in rall}
+
+    def unlock(self, hollow_data, training_data_uuid=None):
+        # locked = rone and rone['t'] == '0000-00-00 00:00:00'
+        # if not locked:
+        #     raise UnlockedEntryException('Cannot unlock if it is not locked!')
+        self.query(f'delete from data where id=?', [hollow_data.uuid00.pretty])
 
     def list_by_name(self, substring, only_historyless=True):
         pass
@@ -184,9 +194,11 @@ class SQL(Persistence):
     def store_dump(self, uuid_, value):
         """Store the given pair uuid-dump of a matrix/vector."""
         sql = f'insert or ignore into dump values (null, ?, ?)'
+        from cururu.sql.sqlite import SQLite
+        dump = memoryview(value) if isinstance(self, SQLite) else value
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.query(sql, [uuid_, value])
+            self.query(sql, [uuid_, dump])
 
     def lock_impl(self, data):
         uuid = data.uuid00.pretty
