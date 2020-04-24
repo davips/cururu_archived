@@ -7,6 +7,7 @@ from cururu.persistence import Persistence, DuplicateEntryException, \
 from pjdata.aux.compression import unpack, pack
 from pjdata.aux.encoders import UUID
 from pjdata.data import Data
+from pjdata.step.transformation import Transformation
 
 
 class SQL(Persistence):
@@ -90,8 +91,8 @@ class SQL(Persistence):
         }
 
         # Create Data.
-        history = list(self.fetch_dumps(huuids).values())
-        print('hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh', history)
+        history = [Transformation.materialize(tr)
+                   for tr in self.fetch_dumps(huuids).values()]
         uuids = {
             name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
         }
