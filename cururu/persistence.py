@@ -34,6 +34,9 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
+    def _fetch_impl(self, hollow_data, fields, training_data_uuid='', lock=False):
+        pass
+
     def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         """Fetch data from DB.
 
@@ -57,6 +60,10 @@ class Persistence(ABC):
         LockedEntryException, FailedEntryException
         :param training_data_uuid:
         """
+        return self._fetch_impl(hollow_data, fields, training_data_uuid, lock)
+
+    @abstractmethod
+    def fetch_matrix(self, name):
         pass
 
     @abstractmethod

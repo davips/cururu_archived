@@ -2,6 +2,9 @@ from cururu.persistence import Persistence
 
 
 class Amnesia(Persistence):
+    def unlock(self, hollow_data, training_data_uuid=None):
+        pass
+
     def list_by_name(self, substring, only_historyless=True):
         return []
 
@@ -10,3 +13,4 @@ class Amnesia(Persistence):
 
     def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         return None
+

@@ -68,9 +68,9 @@ class SQL(Persistence):
         # else:
         print(f': Data inserted', uuid)
 
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, hollow_data, fields, training_data_uuid='', lock=False):
         # Fetch data info.
-        uuid = hollow_data.uuid00.pretty
+        uuid = hollow_data.uuid00.id
         self.query(f"select * from data where id=?", [uuid])
         result = self.get_one()
         if result is None:
@@ -96,26 +96,26 @@ class SQL(Persistence):
         uuids = {
             name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
         }
-        data = Data(_uuid=uuid, _uuids=uuids, _history=history, _failure=None,
+        data = Data(uuid=uuid, uuids=uuids, history=history, failure=None,
                     **matrices_by_name)
 
-        # TODO: How to populate data with nonchanged fields from input_data?
-        #  Opção1: Allow matrices inside Hollow, just to take advantage
-        #  of the untouched matrices.
-        #  opção2: o cache cuida disso.
-        #  opção3: cururu recebe inputdata
-        #  Em qualquer das soluções, basta checar presença e uuid da matriz
+        # TODO: mesclar outputdata com matrizes do inputdata.
+        #  Basta checar presença e uuid da matriz
         #  no input_data para saber a atualidade.
-        #  Opção4 melhor: HollowData pode virar MockData, permitindo matriz.
-        #       Pra fins de fetchbylist, pode ser usado o próprio Data se a
-        #       implementação passar a ser lazy. (ORM-like behavior)
         return data
+
+    def fetch_matrix(self, uuid):
+        self.query(f'select value from dump where id=?', [uuid])
+        rone = self.get_one()
+        return unpack(rone['value'])
 
     def fetch_dumps(self, uuids):
         qmarks = ','.join(['?'] * len(uuids))
-        self.query(f'select id,value from dump where id in ({qmarks})', uuids)
+        sql = f'select id,value from dump where id in ({qmarks})'
+        self.query(sql, uuids)
         rall = self.get_all()
-        return {row['id']: unpack(row['value']) for row in rall}
+        id_value = {row['id']: unpack(row['value']) for row in rall}
+        return {uuid: id_value[uuid] for uuid in uuids}
 
     def unlock(self, hollow_data, training_data_uuid=None):
         # locked = rone and rone['t'] == '0000-00-00 00:00:00'
@@ -124,6 +124,8 @@ class SQL(Persistence):
         self.query(f'delete from data where id=?', [hollow_data.uuid00.pretty])
 
     def list_by_name(self, substring, only_historyless=True):
+        # TODO: Pra fins de fetchbylist, pode ser usado o próprio Data se a
+        #       implementação passar a ser lazy. (ORM-like behavior)
         pass
 
     @staticmethod

@@ -49,8 +49,8 @@ class Worker:
         cls.thread_lock.release()
 
     def _new(self):
-        thread = self.klass(target=self._worker, daemon=False)
-        thread.start()
+        mythread = self.klass(target=self._worker, daemon=False)
+        mythread.start()
 
     def _worker(self):
         setup = self.setup(**self.setup_kwargs) if self.setup else None
