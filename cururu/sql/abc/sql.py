@@ -17,7 +17,7 @@ class SQL(Persistence):
     def store(self, data, fields=None, training_data_uuid='', check_dup=True):
         # The sequence of queries is planned to minimize traffic and CPU load,
         # otherwise it would suffice to just send 'insert or ignore' of dumps.
-        uuid = data.uuid00.pretty
+        uuid = data.uuid00.id
         self.query(f'select t from data where id=?', [uuid])
         rone = self.get_one()
 
@@ -31,7 +31,7 @@ class SQL(Persistence):
             raise DuplicateEntryException('Already exists:', uuid)
 
         # Check if dumps of matrices/vectors already exist (improbable).
-        hashes = [u.pretty for u in data.uuids.values()]
+        hashes = [u.id for u in data.uuids.values()]
         qmarks = ','.join(['?'] * len(hashes))
         self.query(f'select id from dump where id in ({qmarks})', hashes)
         rall = self.get_all()
@@ -39,12 +39,12 @@ class SQL(Persistence):
 
         # Insert only dumps that are missing in storage
         for name, u in data.uuids.items():
-            if u.pretty not in stored_hashes:
-                self.store_dump(u.pretty, data.field_dump(name))
+            if u.id not in stored_hashes:
+                self.store_dump(u.id, data.field_dump(name))
 
         # Insert history.  #TODO: would a transaction be faster here?
         for transf in data.history:
-            self.store_dump(transf.uuid00.pretty, pack(transf.serialized))
+            self.store_dump(transf.uuid00.id, pack(transf.serialized))
 
         # Create row at table 'data'. ---------------------
         sql = f'insert into data values (NULL, ?, ?, ?, ?, NULL)'
@@ -121,7 +121,7 @@ class SQL(Persistence):
         # locked = rone and rone['t'] == '0000-00-00 00:00:00'
         # if not locked:
         #     raise UnlockedEntryException('Cannot unlock if it is not locked!')
-        self.query(f'delete from data where id=?', [hollow_data.uuid00.pretty])
+        self.query(f'delete from data where id=?', [hollow_data.uuid00.id])
 
     def list_by_name(self, substring, only_historyless=True):
         # TODO: Pra fins de fetchbylist, pode ser usado o próprio Data se a
@@ -204,7 +204,7 @@ class SQL(Persistence):
             self.query(sql, [uuid_, dump])
 
     def lock_impl(self, data):
-        uuid = data.uuid00.pretty
+        uuid = data.uuid00.id
         if self.debug:
             print('Locking...', uuid)
 

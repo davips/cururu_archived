@@ -32,7 +32,7 @@ class SQLA(Persistence):
         # TODO: merge pjdata.Data with sql.Data to have a single class and
         #  avoid having to copy the properties.
         da = Data(
-            id=data.uuid00.pretty,
+            id=data.uuid00.id,
             names=data.matrix_names_str,
             matrices=data.uuids_str,
             history=data.history_str
@@ -42,7 +42,7 @@ class SQLA(Persistence):
         # TODO: handle fields properly
         for matrix_name in data.matrix_names:
             du = Dump(
-                id=data.uuids[matrix_name].pretty,
+                id=data.uuids[matrix_name].id,
                 value=data.field_dump(matrix_name)
             )
             self.session.add(du)
