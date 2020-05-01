@@ -68,7 +68,8 @@ class SQL(Persistence):
         # else:
         print(f': Data inserted', uuid)
 
-    def _fetch_impl(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, hollow_data, fields, training_data_uuid='',
+                    lock=False):
         # Fetch data info.
         uuid = hollow_data.uuid00.id
         self.query(f"select * from data where id=?", [uuid])
@@ -96,8 +97,10 @@ class SQL(Persistence):
         uuids = {
             name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
         }
+
+        # TODO: failure and frozen should be stored/fetched!
         data = Data(uuid=uuid, uuids=uuids, history=history, failure=None,
-                    **matrices_by_name)
+                    frozen=False, **matrices_by_name)
 
         # TODO: mesclar outputdata com matrizes do inputdata.
         #  Basta checar presença e uuid da matriz
