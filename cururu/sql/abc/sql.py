@@ -21,16 +21,17 @@ class SQL(Persistence):
         self.query(f'select t from data where id=?', [uuid.id])
         rone = self.get_one()
 
-        # Remove lock.
-        locked = rone and rone['t'] == '0000-00-00 00:00:00'
-        if locked:
-            self.query(f'delete from data where id=?', [uuid.id])
+        if rone:
+            # Remove lock.
+            locked = rone['t'] == '0000-00-00 00:00:00'
+            if locked:
+                self.query(f'delete from data where id=?', [uuid.id])
 
-        # Already exists?
-        elif check_dup and rone:
-            raise DuplicateEntryException('Already exists:', uuid.id)
+            # Already exists?
+            elif check_dup:
+                raise DuplicateEntryException('Already exists:', uuid.id)
 
-        # Check if dumps of matrices/vectors already exist (improbable).
+        # Check if dumps of matrices/vectors already exist.
         qmarks = ','.join(['?'] * len(data.uuids))
         self.query(f'select id from dump where id in ({qmarks})', data.ids_lst)
         rall = self.get_all()
