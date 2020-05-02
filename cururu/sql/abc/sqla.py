@@ -34,7 +34,7 @@ class SQLA(Persistence):
         da = Data(
             id=data.uuid.id,
             names=data.matrix_names_str,
-            matrices=data.uuids_str,
+            matrices=data.ids_str,
             history=data.history_str
         )
         self.session.add(da)
@@ -52,7 +52,7 @@ class SQLA(Persistence):
     def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         Data(id=hollow_data.uuid)
         d = self.session.query(Data).filter_by(
-            id=hollow_data.uuid.pretty
+            id=hollow_data.uuid.id
         ).first()
         if d is None:
             return None
