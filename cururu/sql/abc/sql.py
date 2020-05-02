@@ -17,7 +17,7 @@ class SQL(Persistence):
     def store(self, data, fields=None, training_data_uuid='', check_dup=True):
         # The sequence of queries is planned to minimize traffic and CPU load,
         # otherwise it would suffice to just send 'insert or ignore' of dumps.
-        uuid = data.uuid00.id
+        uuid = data.id
         self.query(f'select t from data where id=?', [uuid])
         rone = self.get_one()
 
@@ -44,7 +44,7 @@ class SQL(Persistence):
 
         # Insert history.  #TODO: would a transaction be faster here?
         for transf in data.history:
-            self.store_dump(transf.uuid00.id, pack(transf.serialized))
+            self.store_dump(transf.uuid.id, pack(transf.serialized))
 
         # Create row at table 'data'. ---------------------
         sql = f'insert into data values (NULL, ?, ?, ?, ?, NULL)'
@@ -71,7 +71,7 @@ class SQL(Persistence):
     def _fetch_impl(self, hollow_data, fields, training_data_uuid='',
                     lock=False):
         # Fetch data info.
-        uuid = hollow_data.uuid00.id
+        uuid = hollow_data.uuid.id
         self.query(f"select * from data where id=?", [uuid])
         result = self.get_one()
         if result is None:
@@ -95,7 +95,7 @@ class SQL(Persistence):
         history = [Transformation.materialize(tr)
                    for tr in self.fetch_dumps(huuids).values()]
         uuids = {
-            name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
+            name_by_muuid[muuid]: UUID(muuid) for muuid in muuids
         }
 
         # TODO: failure and frozen should be stored/fetched!
@@ -124,7 +124,7 @@ class SQL(Persistence):
         # locked = rone and rone['t'] == '0000-00-00 00:00:00'
         # if not locked:
         #     raise UnlockedEntryException('Cannot unlock if it is not locked!')
-        self.query(f'delete from data where id=?', [hollow_data.uuid00.id])
+        self.query(f'delete from data where id=?', [hollow_data.uuid.id])
 
     def list_by_name(self, substring, only_historyless=True):
         # TODO: Pra fins de fetchbylist, pode ser usado o próprio Data se a
@@ -159,7 +159,7 @@ class SQL(Persistence):
         self.query(f'''
             create table if not exists data (
                 n integer NOT NULL primary key {self._auto_incr()},
-                id char(19) NOT NULL UNIQUE,
+                id char(20) NOT NULL UNIQUE,
                 names VARCHAR(255) NOT NULL,
                 matrices VARCHAR(2048), 
                 history VARCHAR(65535),
@@ -168,7 +168,7 @@ class SQL(Persistence):
         self.query(f'''
             create table if not exists dump (
                 n integer NOT NULL primary key {self._auto_incr()},
-                id char(19) NOT NULL UNIQUE,
+                id char(20) NOT NULL UNIQUE,
                 value LONGBLOB NOT NULL
             )''')
 
@@ -207,7 +207,7 @@ class SQL(Persistence):
             self.query(sql, [uuid_, dump])
 
     def lock_impl(self, data):
-        uuid = data.uuid00.id
+        uuid = data.uuid.id
         if self.debug:
             print('Locking...', uuid)
 

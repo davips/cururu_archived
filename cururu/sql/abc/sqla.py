@@ -32,7 +32,7 @@ class SQLA(Persistence):
         # TODO: merge pjdata.Data with sql.Data to have a single class and
         #  avoid having to copy the properties.
         da = Data(
-            id=data.uuid00.id,
+            id=data.uuid.id,
             names=data.matrix_names_str,
             matrices=data.uuids_str,
             history=data.history_str
@@ -50,9 +50,9 @@ class SQLA(Persistence):
         self.session.commit()
 
     def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
-        Data(id=hollow_data.uuid00)
+        Data(id=hollow_data.uuid)
         d = self.session.query(Data).filter_by(
-            id=hollow_data.uuid00.pretty
+            id=hollow_data.uuid.pretty
         ).first()
         if d is None:
             return None
@@ -64,7 +64,7 @@ class SQLA(Persistence):
 
 class CururuBase(object):
     n = Column(Integer, primary_key=True)
-    id = Column(CHAR(19))
+    id = Column(CHAR(20))
 
     @declared_attr
     def __tablename__(cls):
