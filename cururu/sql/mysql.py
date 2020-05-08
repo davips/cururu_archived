@@ -32,7 +32,7 @@ class MySQL(SQL):
         self.connection = pymysql.connect(host=self.host,
                                           user=self.user,
                                           password=self.password,
-                                          charset='utf8mb4',
+                                          charset='utf8',
                                           cursorclass=pymysql.cursors.DictCursor)
         # self.connection.client_flag &= pymysql.constants.CLIENT.MULTI_STATEMENTS
         self.connection.autocommit(True)

@@ -5,7 +5,7 @@ from typing import Optional
 from cururu.persistence import Persistence, DuplicateEntryException, \
     UnlockedEntryException
 from pjdata.aux.compression import unpack, pack
-from pjdata.aux.encoders import UUID
+from pjdata.aux.uuid import UUID
 from pjdata.data import Data
 from pjdata.step.transformation import Transformation
 
@@ -161,7 +161,7 @@ class SQL(Persistence):
         self.query(f'''
             create table if not exists data (
                 n integer NOT NULL primary key {self._auto_incr()},
-                id char(20) NOT NULL UNIQUE,
+                id char(18) NOT NULL UNIQUE,
                 names VARCHAR(255) NOT NULL,
                 matrices VARCHAR(2048), 
                 history VARCHAR(65535),
@@ -170,7 +170,7 @@ class SQL(Persistence):
         self.query(f'''
             create table if not exists dump (
                 n integer NOT NULL primary key {self._auto_incr()},
-                id char(20) NOT NULL UNIQUE,
+                id char(18) NOT NULL UNIQUE,
                 value LONGBLOB NOT NULL
             )''')
 

@@ -64,7 +64,7 @@ class SQLA(Persistence):
 
 class CururuBase(object):
     n = Column(Integer, primary_key=True)
-    id = Column(CHAR(20))
+    id = Column(CHAR(18))
 
     @declared_attr
     def __tablename__(cls):
