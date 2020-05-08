@@ -11,15 +11,14 @@ from glob import glob
 
 
 class PickleServer(Persistence):
-    def __init__(self, db='/tmp/cururu', optimize='speed'):
+    def __init__(self, db='/tmp/cururu', compress=True):
         self.db = db
-        self.optimize = optimize
-        self.speed = optimize == 'speed'  # vs 'space'
+        self.compress = compress
         if not Path(db).exists():
             os.mkdir(db)
 
     def _fetch_impl(self, hollow_data, fields=None, training_data_uuid='',
-              lock=False):
+                    lock=False):
         # TODO: deal with fields and missing fields?
         filename = self._filename('*', hollow_data, training_data_uuid)
 
@@ -80,9 +79,10 @@ class PickleServer(Persistence):
         raise NotImplementedError
 
     def _filename(self, prefix, data, training_data_uuid=''):
+        zip = 'compressed' if self.compress else ''
         uuids = [tr.sid for tr in data.history]
         rest = f'-{training_data_uuid}-' + '-'.join(uuids) + \
-               f'.{self.optimize}.dump'
+               f'.{zip}.dump'
         if prefix == '*':
             query = self.db + '/*' + rest
             lst = glob(query)
@@ -102,13 +102,13 @@ class PickleServer(Persistence):
         :return: Data
         """
         try:
-            if self.speed:
+            if self.compress:
+                return load(filename)
+            else:
                 f = open(filename, 'rb')
                 res = pickle.load(f)
                 f.close()
                 return res
-            else:
-                return load(filename)
         except Exception as e:
             traceback.print_exc()
             print('Problems loading', filename)
@@ -122,12 +122,12 @@ class PickleServer(Persistence):
         :return: None
         """
         print('W: Storing...', filename)
-        if self.speed:
+        if self.compress:
+            save(filename, data)
+        else:
             f = open(filename, 'wb')
             pickle.dump(data, f)
             f.close()
-        else:
-            save(filename, data)
 
     def unlock(self, data, training_data_uuid=''):
         filename = self._filename('*', data, training_data_uuid)
