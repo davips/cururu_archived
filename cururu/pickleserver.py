@@ -17,8 +17,7 @@ class PickleServer(Persistence):
         if not Path(db).exists():
             os.mkdir(db)
 
-    def _fetch_impl(self, hollow_data, fields=None, training_data_uuid='',
-                    lock=False):
+    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         # TODO: deal with fields and missing fields?
         filename = self._filename('*', hollow_data, training_data_uuid)
 

@@ -1,13 +1,10 @@
 import multiprocessing
 import threading
+from abc import abstractmethod
 from dataclasses import dataclass
 from multiprocessing import JoinableQueue
 from multiprocessing import Queue
 from queue import Empty
-
-
-class Nothing(type):
-    """Singleton"""
 
 
 @dataclass
@@ -17,12 +14,12 @@ class Worker2:
     multiprocess: bool = False
     timeout: float = 2  # Time spent hoping the thread will be useful again.
     queue = Queue()
+    alias = None
     outqueue = JoinableQueue()
     process_lock = multiprocessing.Lock()
     thread_lock = threading.Lock()
 
     def __post_init__(self):
-        print('new worker......................................')
         if self.multiprocess:
             self.lock = self.process_lock
             self.klass = multiprocessing.Process
@@ -30,13 +27,29 @@ class Worker2:
             self.lock = self.thread_lock
             self.klass = threading.Thread
 
-    def put(self, function):
+    def put(self, method_name, locals_, wait=False):
         """Add a new function to the queue to be executed."""
-        self.queue.put(function)
+        tup = method_name, self._prepare_args(locals_), wait
+        self.queue.put(tup)
 
         # Create a new thread if there is none alive.
         if self.lock.acquire(False):
+            print('new thread......................................')
             self._new()
+
+        # Wait for result if asked.
+        if wait:
+            try:
+                ret = self.outqueue.get()
+                self.outqueue.task_done()
+                return ret
+            except Exception as e:
+                print('Problem while expecting storage reply:', e)
+                try:
+                    self.outqueue.get()
+                    self.outqueue.task_done()
+                finally:
+                    exit(0)
 
     @classmethod
     def join(cls):
@@ -51,13 +64,29 @@ class Worker2:
         mythread.start()
 
     def _worker(self):
+        backend = self.backend(self.alias)
         while True:
             try:
-                f, kwargs = self.queue.get(timeout=self.timeout)
-                ret = f(**kwargs)
-                if ret is not Nothing:
+                method_name, kwargs, wait = self.queue.get(
+                    timeout=self.timeout)
+                ret = getattr(backend, method_name)(**kwargs)
+
+                if wait:
                     self.outqueue.put(ret)
                     self.outqueue.join()
             except Empty:
                 break
+            # else:
+            #     break
         self.lock.release()
+
+    @staticmethod
+    def _prepare_args(locals_):
+        locals_ = locals_.copy()
+        del locals_['self']
+        return locals_
+
+    @staticmethod
+    @abstractmethod
+    def backend(alias):
+        pass

@@ -69,8 +69,7 @@ class SQL(Persistence):
         # else:
         print(f': Data inserted', uuid)
 
-    def _fetch_impl(self, hollow_data, fields, training_data_uuid='',
-                    lock=False):
+    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
         # Fetch data info.
         uuid = hollow_data.uuid
         self.query(f"select * from data where id=?", [uuid.id])
