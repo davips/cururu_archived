@@ -33,7 +33,7 @@ class Storage(Worker2, Persistence):
     def list_by_name(self, substring, only_historyless=True):
         pass
 
-    # TIP: self.lock and SQLite cannot be passe dto threads, due to pickle err
+    # TIP: self.lock and SQLite cannot be passed to threads, due to pickle err
     # TIP: sqlite3.ProgrammingError: SQLite objects created in a thread can
     # only be used in that same thread.
     # ==================================================
