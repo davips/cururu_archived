@@ -34,7 +34,10 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
+        pass
+
+    def fetch(self, data, fields, training_data_uuid='', lock=False):
         """Fetch data from DB.
 
         Parameters
@@ -57,10 +60,17 @@ class Persistence(ABC):
         LockedEntryException, FailedEntryException
         :param training_data_uuid:
         """
-        pass
+        if not data.isfrozen:
+            raise Exception(
+                'Persistence expects a frozen or melting (temporary frozen) '
+                'Data object!')
+        data = self._fetch_impl(data, fields, training_data_uuid, lock)
+        if data and data.ismelting:
+            return data.updated(tuple(), frozen=False)
+        return data
 
     @abstractmethod
-    def fetch_matrix(self, name):
+    def fetch_matrix(self, id):
         pass
 
     @abstractmethod
@@ -86,7 +96,7 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def unlock(self, hollow_data, training_data_uuid=None):
+    def unlock(self, data, training_data_uuid=None):
         pass
 
 

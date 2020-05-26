@@ -27,9 +27,10 @@ class Worker2:
             self.lock = self.thread_lock
             self.klass = threading.Thread
 
-    def put(self, method_name, locals_, wait=False):
+    def put(self, method_name, locals_=None, wait=False):
         """Add a new function to the queue to be executed."""
-        tup = method_name, self._prepare_args(locals_), wait
+        kwargs = self._prepare_args(locals_) if locals_ else {}
+        tup = method_name, kwargs, wait
         self.queue.put(tup)
 
         # Create a new thread if there is none alive.

@@ -17,9 +17,9 @@ class PickleServer(Persistence):
         if not Path(db).exists():
             os.mkdir(db)
 
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
         # TODO: deal with fields and missing fields?
-        filename = self._filename('*', hollow_data, training_data_uuid)
+        filename = self._filename('*', data, training_data_uuid)
 
         # Not started yet?
         if not Path(filename).exists():
@@ -74,7 +74,7 @@ class PickleServer(Persistence):
                 datas.append(data.hollow)
         return datas
 
-    def fetch_matrix(self, name):
+    def fetch_matrix(self, id):
         raise NotImplementedError
 
     def _filename(self, prefix, data, training_data_uuid=''):

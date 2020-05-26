@@ -49,10 +49,10 @@ class SQLA(Persistence):
 
         self.session.commit()
 
-    def _fetch_impl(self, hollow_data, fields, training_data_uuid='', lock=False):
-        Data(id=hollow_data.uuid)
+    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
+        Data(id=data.uuid)
         d = self.session.query(Data).filter_by(
-            id=hollow_data.uuid.id
+            id=data.uuid.id
         ).first()
         if d is None:
             return None

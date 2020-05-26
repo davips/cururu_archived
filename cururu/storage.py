@@ -1,33 +1,39 @@
-import json
-
 from cururu.amnesia import Amnesia
 from cururu.persistence import Persistence
 from cururu.pickleserver import PickleServer
 from cururu.worker2 import Worker2
-
-# global provisorio
-with open('config.json', 'r') as f:
-    Global = json.load(f)
-Global['default_dump'] = {'engine': 'dump'}
-Global['default_sqlite'] = {'engine': 'sqlite'}
+from pjdata.config import Global
 
 
 class Storage(Worker2, Persistence):
+    """Multithreaded* persistence.
+
+    * -> Two options:
+        monothread (Python threading peculiar concept)
+        multiprocess (Python multiprocessing concept)
+
+    ps. É global, mas sem perder a integridade referencial.
+    'New' garante o mesmo objeto para mesmo argumento."""
+
+    def __new__(cls, alias):
+        if alias not in Global['storages']:
+            Global['storages'][alias] = object.__new__(cls)
+        return Global['storages'][alias]
+
     def __init__(self, alias):
-        """"""
         super().__init__()
         self.alias = alias
 
     def store(self, data, fields=None, training_data_uuid='', check_dup=True):
         self.put('store', locals())
 
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
         return self.put('fetch', locals(), wait=True)
 
-    def fetch_matrix(self, name):
+    def fetch_matrix(self, id):
         return self.put('fetch_matrix', locals(), wait=True)
 
-    def unlock(self, hollow_data, training_data_uuid=None):
+    def unlock(self, data, training_data_uuid=None):
         self.put('unlock', locals())
 
     def list_by_name(self, substring, only_historyless=True):
@@ -48,10 +54,10 @@ class Storage(Worker2, Persistence):
         elif engine == "mysql":
             from cururu.sql.mysql import MySQL
             # TODO: does mysql already have extra settings now?
-            return MySQL(**kwargs)
+            return MySQL(storage_info=alias, **kwargs)
         elif engine == "sqlite":
             from cururu.sql.sqlite import SQLite
-            return SQLite(**kwargs)
+            return SQLite(storage_info=alias, **kwargs)
         elif engine == "mysqla":
             from cururu.sql.sqla_backends import MySQLA
             # TODO: does mysql already have extra settings now?

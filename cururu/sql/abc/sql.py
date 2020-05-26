@@ -12,6 +12,7 @@ from pjdata.step.transformation import Transformation
 
 class SQL(Persistence):
     cursor = None
+    storage_info = None
 
     # TODO: remove training_data_uuid from here and put it inside transformations
     def store(self, data, fields=None, training_data_uuid='', check_dup=True):
@@ -69,9 +70,9 @@ class SQL(Persistence):
         # else:
         print(f': Data inserted', uuid)
 
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
         # Fetch data info.
-        uuid = hollow_data.uuid
+        uuid = data.uuid
         self.query(f"select * from data where id=?", [uuid.id])
         result = self.get_one()
         if result is None:
@@ -83,12 +84,14 @@ class SQL(Persistence):
 
         name_by_mid = dict(zip(mids, names))
 
-        # # Fetch matrices and history.
-        # # TODO: postpone fetching to LazyData, or bring only the needed ones.
-        matrices_by_mid = self.fetch_dumps(mids)
-        matrices_by_name = {
-            name_by_mid[mid]: matrices_by_mid[mid] for mid in mids
-        }
+        # Fetch matrices and history (lazily, if storage_info is provided).
+        if self.storage_info:
+            matrices_by_name = {name_by_mid[mid]: UUID(mid) for mid in mids}
+        else:
+            matrices_by_mid = self.fetch_dumps(mids)
+            matrices_by_name = {
+                name_by_mid[mid]: matrices_by_mid[mid] for mid in mids
+            }
 
         # Create Data.
         history = [Transformation.materialize(tr)
@@ -98,19 +101,18 @@ class SQL(Persistence):
         }
 
         # TODO: failure and frozen should be stored/fetched!
+        # data.updated
         data = Data(uuid=uuid, uuids=uuids, history=history, failure=None,
-                    frozen=False, **matrices_by_name)
-        # data = Data(uuid=uuid, uuids=uuids, history=history, failure=None,
-        #             frozen=False, storage=self) # , **matrices_by_name)
+                    frozen=data.isfrozen, storage_info=self.storage_info,
+                    **matrices_by_name)
 
-        # TODO: mesclar outputdata com matrizes do inputdata.
-        #  Basta checar presença e uuid da matriz
-        #  no input_data para saber a atualidade.
         return data
 
-    def fetch_matrix(self, mid):
-        self.query(f'select value from dump where id=?', [mid])
+    def fetch_matrix(self, id):
+        self.query(f'select value from dump where id=?', [id])
         rone = self.get_one()
+        if rone is None:
+            raise Exception('Matrix not found!', id)
         return unpack(rone['value'])
 
     def fetch_dumps(self, duids):
@@ -121,11 +123,11 @@ class SQL(Persistence):
         id_value = {row['id']: unpack(row['value']) for row in rall}
         return {duid: id_value[duid] for duid in duids}
 
-    def unlock(self, hollow_data, training_data_uuid=None):
+    def unlock(self, data, training_data_uuid=None):
         # locked = rone and rone['t'] == '0000-00-00 00:00:00'
         # if not locked:
         #     raise UnlockedEntryException('Cannot unlock if it is not locked!')
-        self.query(f'delete from data where id=?', [hollow_data.uuid.id])
+        self.query(f'delete from data where id=?', [data.uuid.id])
 
     def list_by_name(self, substring, only_historyless=True):
         # TODO: Pra fins de fetchbylist, pode ser usado o próprio Data se a
