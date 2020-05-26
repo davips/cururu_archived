@@ -74,7 +74,7 @@ class CururuBase(object):
 Base = declarative_base(cls=CururuBase)
 
 
-class Data(Base):
+class Dataasdasd(Base):
     names = Column(VARCHAR(255))  # Up to 94 matrix names; 23*(M,Md,Mt,M_)=92
     matrices = Column(VARCHAR(2048))  # Up to 102 matrices.
     history = Column(VARCHAR(65535))  # Up to 3277 transformations.

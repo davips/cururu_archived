@@ -2,8 +2,7 @@ import warnings
 from abc import abstractmethod
 from typing import Optional
 
-from cururu.persistence import Persistence, DuplicateEntryException, \
-    UnlockedEntryException
+from cururu.persistence import Persistence, DuplicateEntryException
 from pjdata.aux.compression import unpack, pack
 from pjdata.aux.uuid import UUID
 from pjdata.data import Data
@@ -84,44 +83,46 @@ class SQL(Persistence):
 
         name_by_mid = dict(zip(mids, names))
 
-        # Fetch matrices and history (lazily, if storage_info is provided).
-        if self.storage_info:
-            matrices_by_name = {name_by_mid[mid]: UUID(mid) for mid in mids}
+        # Fetch matrices (lazily, if storage_info is provided).
+        new_mids = [mid for mid in mids if mid not in data.ids_lst]
+        matrices = data.matrices
+        if self.storage_info is None:
+            matrices_by_mid = self.fetch_dumps(new_mids)
+            for mid in new_mids:
+                matrices[name_by_mid[mid]] = matrices_by_mid[mid]
         else:
-            matrices_by_mid = self.fetch_dumps(mids)
-            matrices_by_name = {
-                name_by_mid[mid]: matrices_by_mid[mid] for mid in mids
-            }
+            for mid in new_mids:
+                matrices[name_by_mid[mid]] = UUID(mid)
 
-        # Create Data.
-        history = [Transformation.materialize(tr)
-                   for tr in self.fetch_dumps(hids).values()]
-        uuids = {
-            name_by_mid[mid]: UUID(mid) for mid in mids
-        }
+        # Fetch history.
+        serialized_tranfs = self.fetch_dumps(hids, aslist=True)
+        history = [Transformation.materialize(tr) for tr in serialized_tranfs]
 
         # TODO: failure and frozen should be stored/fetched!
-        # data.updated
-        data = Data(uuid=uuid, uuids=uuids, history=history, failure=None,
-                    frozen=data.isfrozen, storage_info=self.storage_info,
-                    **matrices_by_name)
-
-        return data
+        # TODO: hollow
+        return Data(history=history, failure=None, frozen=False,
+                    storage_info=self.storage_info,
+                    **matrices)
 
     def fetch_matrix(self, id):
+        # TODO: quando faz select em algo que não existe, fica esperando
+        #  infinitamente algum lock liberar
         self.query(f'select value from dump where id=?', [id])
         rone = self.get_one()
         if rone is None:
             raise Exception('Matrix not found!', id)
         return unpack(rone['value'])
 
-    def fetch_dumps(self, duids):
+    def fetch_dumps(self, duids, aslist=False):
         qmarks = ','.join(['?'] * len(duids))
-        sql = f'select id,value from dump where id in ({qmarks})'
+        sql = f'select id,value from dump where id in ({qmarks}) order by n'
         self.query(sql, duids)
         rall = self.get_all()
         id_value = {row['id']: unpack(row['value']) for row in rall}
-        return {duid: id_value[duid] for duid in duids}
+        if aslist:
+            return [id_value[duid] for duid in duids]
+        else:
+            return {duid: id_value[duid] for duid in duids}
 
     def unlock(self, data, training_data_uuid=None):
         # locked = rone and rone['t'] == '0000-00-00 00:00:00'

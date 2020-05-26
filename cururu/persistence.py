@@ -62,8 +62,7 @@ class Persistence(ABC):
         """
         if not data.isfrozen:
             raise Exception(
-                'Persistence expects a frozen or melting (temporary frozen) '
-                'Data object!')
+                'Persistence expects a hollow Data object!')
         data = self._fetch_impl(data, fields, training_data_uuid, lock)
         if data and data.ismelting:
             return data.updated(tuple(), frozen=False)
