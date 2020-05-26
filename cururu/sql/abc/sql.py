@@ -99,8 +99,7 @@ class SQL(Persistence):
         history = [Transformation.materialize(tr) for tr in serialized_tranfs]
 
         # TODO: failure and frozen should be stored/fetched!
-        # TODO: hollow
-        return Data(history=history, failure=None, frozen=False,
+        return Data(history=history, failure=None, frozen=False, hollow=False,
                     storage_info=self.storage_info,
                     **matrices)
 

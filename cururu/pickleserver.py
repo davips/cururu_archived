@@ -71,7 +71,7 @@ class PickleServer(Persistence):
         for file in sorted(glob(path), key=os.path.getmtime):
             data = self._load(file)
             if only_original and data.history.size == 1:
-                datas.append(data.hollow)
+                datas.append(data.hollow(tuple()))
         return datas
 
     def fetch_matrix(self, id):
