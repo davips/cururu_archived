@@ -25,13 +25,12 @@ class SQLA(Persistence):
         print('engine started,,,,,,,,,,,,,,,,,,,,,,,')
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
-        # TODO: verify if pure mysql is faster, or just profile to see the
-        # weigth of sqlalchemy_utils
+        # TODO: verify if pure mysql is faster
 
     def store(self, data, fields=None, training_data_uuid='', check_dup=True):
         # TODO: merge pjdata.Data with sql.Data to have a single class and
         #  avoid having to copy the properties.
-        da = Data(
+        da = DataSQLA(
             id=data.uuid.id,
             names=data.matrix_names_str,
             matrices=data.ids_str,
@@ -50,8 +49,8 @@ class SQLA(Persistence):
         self.session.commit()
 
     def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
-        Data(id=data.uuid)
-        d = self.session.query(Data).filter_by(
+        DataSQLA(id=data.uuid)
+        d = self.session.query(DataSQLA).filter_by(
             id=data.uuid.id
         ).first()
         if d is None:
@@ -74,7 +73,7 @@ class CururuBase(object):
 Base = declarative_base(cls=CururuBase)
 
 
-class Dataasdasd(Base):
+class DataSQLA(Base):
     names = Column(VARCHAR(255))  # Up to 94 matrix names; 23*(M,Md,Mt,M_)=92
     matrices = Column(VARCHAR(2048))  # Up to 102 matrices.
     history = Column(VARCHAR(65535))  # Up to 3277 transformations.
