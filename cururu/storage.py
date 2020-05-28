@@ -2,7 +2,7 @@ from cururu.amnesia import Amnesia
 from cururu.persistence import Persistence
 from cururu.pickleserver import PickleServer
 from cururu.worker2 import Worker2
-from pjdata.config import Global
+from pjdata.config import STORAGE_CONFIG
 
 
 class Storage(Worker2, Persistence):
@@ -16,9 +16,9 @@ class Storage(Worker2, Persistence):
     'New' garante o mesmo objeto para mesmo argumento."""
 
     def __new__(cls, alias):
-        if alias not in Global['storages']:
-            Global['storages'][alias] = object.__new__(cls)
-        return Global['storages'][alias]
+        if alias not in STORAGE_CONFIG['storages']:
+            STORAGE_CONFIG['storages'][alias] = object.__new__(cls)
+        return STORAGE_CONFIG['storages'][alias]
 
     def __init__(self, alias):
         super().__init__()
@@ -46,7 +46,7 @@ class Storage(Worker2, Persistence):
 
     @staticmethod
     def backend(alias):
-        kwargs = Global.get(alias, {})
+        kwargs = STORAGE_CONFIG.get(alias, {})
         engine = kwargs.pop('engine') if 'engine' in kwargs else alias
 
         if engine == "amnesia":
