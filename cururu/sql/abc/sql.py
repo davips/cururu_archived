@@ -5,8 +5,7 @@ from typing import Optional
 from cururu.persistence import Persistence, DuplicateEntryException
 from pjdata.aux.compression import unpack, pack
 from pjdata.aux.uuid import UUID
-from pjdata.data import Data
-from pjdata.step.transformation import Transformation
+from pjdata.content.data import Data
 
 
 class SQL(Persistence):
