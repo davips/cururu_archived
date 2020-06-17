@@ -68,8 +68,7 @@ class Worker2:
         backend = self.backend(self.alias)
         while True:
             try:
-                method_name, kwargs, wait = self.queue.get(
-                    timeout=self.timeout)
+                method_name, kwargs, wait = self.queue.get(timeout=self.timeout)
                 ret = getattr(backend, method_name)(**kwargs)
 
                 if wait:

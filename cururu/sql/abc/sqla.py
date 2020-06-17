@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
 from cururu.persistence import Persistence
-from pjdata.specialdata import NoData
+
+from pjdata.types import Data
 
 
 class SQLA(Persistence):
@@ -27,7 +28,7 @@ class SQLA(Persistence):
         self.session = Session()
         # TODO: verify if pure mysql is faster
 
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def store(self, data: Data, check_dup: bool = True):
         # TODO: merge pjdata.Data with sql.Data to have a single class and
         #  avoid having to copy the properties.
         da = DataSQLA(
@@ -48,7 +49,7 @@ class SQLA(Persistence):
 
         self.session.commit()
 
-    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         DataSQLA(id=data.uuid)
         d = self.session.query(DataSQLA).filter_by(
             id=data.uuid.id

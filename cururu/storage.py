@@ -3,6 +3,7 @@ from cururu.persistence import Persistence
 from cururu.pickleserver import PickleServer
 from cururu.worker2 import Worker2
 from pjdata.config import STORAGE_CONFIG
+from pjdata.types import Data
 
 
 class Storage(Worker2, Persistence):
@@ -24,10 +25,10 @@ class Storage(Worker2, Persistence):
         super().__init__()
         self.alias = alias
 
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def store(self, data: Data, check_dup: bool = True):
         self.put('store', locals())
 
-    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         return self.put('fetch', locals(), wait=True)
 
     def fetch_matrix(self, id):

@@ -6,6 +6,7 @@ from cururu.persistence import Persistence, DuplicateEntryException
 from pjdata.aux.compression import unpack, pack
 from pjdata.aux.uuid import UUID
 from pjdata.content.data import Data
+from pjdata.transformer.transformer import Transformer
 
 
 class SQL(Persistence):
@@ -13,7 +14,7 @@ class SQL(Persistence):
     storage_info = None
 
     # TODO: remove training_data_uuid from here and put it inside transformations
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def store(self, data: Data, check_dup: bool = True):
         # The sequence of queries is planned to minimize traffic and CPU load,
         # otherwise it would suffice to just send 'insert or ignore' of dumps.
         uuid = data.uuid
@@ -68,7 +69,7 @@ class SQL(Persistence):
         # else:
         print(f': Data inserted', uuid)
 
-    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         # Fetch data info.
         uuid = data.uuid
         self.query(f"select * from data where id=?", [uuid.id])
@@ -95,9 +96,10 @@ class SQL(Persistence):
 
         # Fetch history.
         serialized_tranfs = self.fetch_dumps(hids, aslist=True)
-        history = [Transformation.materialize(tr) for tr in serialized_tranfs]
+        history = tuple(Transformer.materialize(tr) for tr in serialized_tranfs)
 
         # TODO: failure and frozen should be stored/fetched!
+        # TODO: would it be worth to update uuid/uuids here, instead of recalculating it from the start at Data.init?
         return Data(history=history, failure=None, frozen=False, hollow=False,
                     storage_info=self.storage_info,
                     **matrices)

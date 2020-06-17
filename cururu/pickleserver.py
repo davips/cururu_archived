@@ -9,6 +9,8 @@ import _pickle as pickle
 from pathlib import Path
 from glob import glob
 
+from pjdata.types import Data
+
 
 class PickleServer(Persistence):
     def __init__(self, db='/tmp/cururu', compress=True):
@@ -17,9 +19,9 @@ class PickleServer(Persistence):
         if not Path(db).exists():
             os.mkdir(db)
 
-    def _fetch_impl(self, data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         # TODO: deal with fields and missing fields?
-        filename = self._filename('*', data, training_data_uuid)
+        filename = self._filename('*', data, )
 
         # Not started yet?
         if not Path(filename).exists():
@@ -42,15 +44,12 @@ class PickleServer(Persistence):
 
         return transformed_data
 
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def store(self, data, check_dup=True):
         """The dataset name of data_out will be the filename prefix for
         convenience."""
-        # TODO: deal with fields and missing fields?
-        if fields is None:
-            fields = ['X', 'Y']
 
         # TODO: reput name on Data?
-        filename = self._filename('name', data, training_data_uuid)
+        filename = self._filename('name', data)
         # filename = self._filename(data.name, data, training_data_uuid)
 
         # sleep(0.020)  # Latency simulator.
@@ -59,13 +58,13 @@ class PickleServer(Persistence):
         if check_dup and Path(filename).exists():
             raise DuplicateEntryException('Already exists:', filename)
 
-        locked = self._filename('', data, training_data_uuid)
+        locked = self._filename('', data)
         if Path(locked).exists():
             os.remove(locked)
 
         self._dump(data, filename)
 
-    def list_by_name(self, substring, only_original=True):
+    def list_by_name(self, substring, only_original=True):  # TODO: take advantage of lazy data, instead of using hollow
         datas = []
         path = self.db + f'/*{substring}*-*.dump'
         for file in sorted(glob(path), key=os.path.getmtime):
@@ -77,11 +76,10 @@ class PickleServer(Persistence):
     def fetch_matrix(self, id):
         raise NotImplementedError
 
-    def _filename(self, prefix, data, training_data_uuid=''):
+    def _filename(self, prefix, data):
         zip = 'compressed' if self.compress else ''
         uuids = [tr.sid for tr in data.history]
-        rest = f'-{training_data_uuid}-' + '-'.join(uuids) + \
-               f'.{zip}.dump'
+        rest = f'-'.join(uuids) + f'.{zip}.dump'
         if prefix == '*':
             query = self.db + '/*' + rest
             lst = glob(query)
