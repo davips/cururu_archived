@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
 from cururu.persistence import Persistence
-from pjdata.specialdata import NoData
+
+from pjdata.types import Data
 
 
 class SQLA(Persistence):
@@ -25,16 +26,15 @@ class SQLA(Persistence):
         print('engine started,,,,,,,,,,,,,,,,,,,,,,,')
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
-        # TODO: verify if pure mysql is faster, or just profile to see the
-        # weigth of sqlalchemy_utils
+        # TODO: verify if pure mysql is faster
 
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def store(self, data: Data, check_dup: bool = True):
         # TODO: merge pjdata.Data with sql.Data to have a single class and
         #  avoid having to copy the properties.
-        da = Data(
-            id=data.uuid00.id,
+        da = DataSQLA(
+            id=data.uuid.id,
             names=data.matrix_names_str,
-            matrices=data.uuids_str,
+            matrices=data.ids_str,
             history=data.history_str
         )
         self.session.add(da)
@@ -49,10 +49,10 @@ class SQLA(Persistence):
 
         self.session.commit()
 
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
-        Data(id=hollow_data.uuid00)
-        d = self.session.query(Data).filter_by(
-            id=hollow_data.uuid00.pretty
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
+        DataSQLA(id=data.uuid)
+        d = self.session.query(DataSQLA).filter_by(
+            id=data.uuid.id
         ).first()
         if d is None:
             return None
@@ -64,7 +64,7 @@ class SQLA(Persistence):
 
 class CururuBase(object):
     n = Column(Integer, primary_key=True)
-    id = Column(CHAR(19))
+    id = Column(CHAR(18))
 
     @declared_attr
     def __tablename__(cls):
@@ -74,7 +74,7 @@ class CururuBase(object):
 Base = declarative_base(cls=CururuBase)
 
 
-class Data(Base):
+class DataSQLA(Base):
     names = Column(VARCHAR(255))  # Up to 94 matrix names; 23*(M,Md,Mt,M_)=92
     matrices = Column(VARCHAR(2048))  # Up to 102 matrices.
     history = Column(VARCHAR(65535))  # Up to 3277 transformations.

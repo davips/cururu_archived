@@ -7,7 +7,8 @@ from cururu.sql.abc.sql import SQL
 
 
 class MySQL(SQL):
-    def __init__(self, db='user:pass@ip/db', debug=True, read_only=False):
+    def __init__(self, db='user:pass@ip/db', storage_info=None, debug=True,
+                 read_only=False):
         server = db.split('/')[0]
         db = db.split('/')[1]
         self.info = server + ', ' + db
@@ -16,6 +17,7 @@ class MySQL(SQL):
         credentials, self.host = server.split('@')
         self.user, self.password = credentials.split(':')
         self.db = db
+        self.storage_info = storage_info
         self.debug = debug
         if '-' in db:
             raise Exception("'-' not allowed in db name!")
@@ -32,7 +34,7 @@ class MySQL(SQL):
         self.connection = pymysql.connect(host=self.host,
                                           user=self.user,
                                           password=self.password,
-                                          charset='utf8mb4',
+                                          charset='utf8',
                                           cursorclass=pymysql.cursors.DictCursor)
         # self.connection.client_flag &= pymysql.constants.CLIENT.MULTI_STATEMENTS
         self.connection.autocommit(True)

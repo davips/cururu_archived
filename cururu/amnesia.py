@@ -1,16 +1,19 @@
 from cururu.persistence import Persistence
+from pjdata.types import Data
 
 
 class Amnesia(Persistence):
-    def unlock(self, hollow_data, training_data_uuid=None):
+    def store(self, data: Data, check_dup: bool = True):
+        pass
+
+    def fetch_matrix(self, id):
+        pass
+
+    def unlock(self, data, training_data_uuid=None):
         pass
 
     def list_by_name(self, substring, only_historyless=True):
         return []
 
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         pass
-
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
-        return None
-

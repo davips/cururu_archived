@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from pjdata.types import Data
+
 
 class Persistence(ABC):
     """
@@ -9,7 +11,7 @@ class Persistence(ABC):
     """
 
     @abstractmethod
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def store(self, data: Data, check_dup: bool = True):
         """
         Parameters
         ----------
@@ -34,19 +36,16 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def _fetch_impl(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         pass
 
-    def fetch(self, hollow_data, fields, training_data_uuid='', lock=False):
+    def fetch(self, data: Data, lock: bool = False) -> Data:
         """Fetch data from DB.
 
         Parameters
         ----------
-        hollow_data
+        data
             Data object before being transformed by a pipeline.
-        fields
-            List of names of the matrices to fetch (for performance reasons).
-            When None, fetch them all.
         lock
             Whether to mark entry (input data and pipeline combination) as
             locked, when no data is found for the entry.
@@ -58,12 +57,13 @@ class Persistence(ABC):
         Exception
         ---------
         LockedEntryException, FailedEntryException
-        :param training_data_uuid:
         """
-        return self._fetch_impl(hollow_data, fields, training_data_uuid, lock)
+        if not data.ishollow:
+            raise Exception('Persistence expects a hollow Data object!')
+        return self._fetch_impl(data, lock)
 
     @abstractmethod
-    def fetch_matrix(self, name):
+    def fetch_matrix(self, id):
         pass
 
     @abstractmethod
@@ -89,7 +89,7 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def unlock(self, hollow_data, training_data_uuid=None):
+    def unlock(self, data, training_data_uuid=None):
         pass
 
 

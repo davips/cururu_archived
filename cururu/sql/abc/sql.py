@@ -2,38 +2,38 @@ import warnings
 from abc import abstractmethod
 from typing import Optional
 
-from cururu.persistence import Persistence, DuplicateEntryException, \
-    UnlockedEntryException
+from cururu.persistence import Persistence, DuplicateEntryException
 from pjdata.aux.compression import unpack, pack
-from pjdata.aux.encoders import UUID
-from pjdata.data import Data
-from pjdata.step.transformation import Transformation
+from pjdata.aux.uuid import UUID
+from pjdata.content.data import Data
+from pjdata.transformer.transformer import Transformer
 
 
 class SQL(Persistence):
     cursor = None
+    storage_info = None
 
     # TODO: remove training_data_uuid from here and put it inside transformations
-    def store(self, data, fields=None, training_data_uuid='', check_dup=True):
+    def store(self, data: Data, check_dup: bool = True):
         # The sequence of queries is planned to minimize traffic and CPU load,
         # otherwise it would suffice to just send 'insert or ignore' of dumps.
-        uuid = data.uuid00.id
-        self.query(f'select t from data where id=?', [uuid])
+        uuid = data.uuid
+        self.query(f'select t from data where id=?', [uuid.id])
         rone = self.get_one()
 
-        # Remove lock.
-        locked = rone and rone['t'] == '0000-00-00 00:00:00'
-        if locked:
-            self.query(f'delete from data where id=?', [uuid])
+        if rone:
+            # Remove lock.
+            locked = rone['t'] == '0000-00-00 00:00:00'
+            if locked:
+                self.query(f'delete from data where id=?', [uuid.id])
 
-        # Already exists?
-        elif check_dup and rone:
-            raise DuplicateEntryException('Already exists:', uuid)
+            # Already exists?
+            elif check_dup:
+                raise DuplicateEntryException('Already exists:', uuid.id)
 
-        # Check if dumps of matrices/vectors already exist (improbable).
-        hashes = [u.id for u in data.uuids.values()]
-        qmarks = ','.join(['?'] * len(hashes))
-        self.query(f'select id from dump where id in ({qmarks})', hashes)
+        # Check if dumps of matrices/vectors already exist.
+        qmarks = ','.join(['?'] * len(data.uuids))
+        self.query(f'select id from dump where id in ({qmarks})', data.ids_lst)
         rall = self.get_all()
         stored_hashes = [row['id'] for row in rall]
 
@@ -44,16 +44,17 @@ class SQL(Persistence):
 
         # Insert history.  #TODO: would a transaction be faster here?
         for transf in data.history:
-            self.store_dump(transf.uuid00.id, pack(transf.serialized))
+            self.store_dump(transf.uuid.id, pack(transf.serialized))
 
         # Create row at table 'data'. ---------------------
         sql = f'insert into data values (NULL, ?, ?, ?, ?, NULL)'
-        data_args = [uuid,
+
+        data_args = [uuid.id,
                      data.matrix_names_str,
-                     data.uuids_str,
+                     data.ids_str,
                      data.history_str]
-        from sqlite3 import IntegrityError as IntegrityErrorSQLite
-        from pymysql import IntegrityError as IntegrityErrorMySQL
+        # from sqlite3 import IntegrityError as IntegrityErrorSQLite
+        # from pymysql import IntegrityError as IntegrityErrorMySQL
         # try:
         self.query(sql, data_args)
         # unfortunately,
@@ -68,63 +69,66 @@ class SQL(Persistence):
         # else:
         print(f': Data inserted', uuid)
 
-    def _fetch_impl(self, hollow_data, fields, training_data_uuid='',
-                    lock=False):
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         # Fetch data info.
-        uuid = hollow_data.uuid00.id
-        self.query(f"select * from data where id=?", [uuid])
+        uuid = data.uuid
+        self.query(f"select * from data where id=?", [uuid.id])
         result = self.get_one()
         if result is None:
             return None
         # values_by_id = {row['id']: row['value'] for row in rall}
         names = result['names'].split(',')
-        muuids = result['matrices'].split(',')
-        huuids = result['history'].split(',')
+        mids = result['matrices'].split(',')
+        hids = result['history'].split(',')
 
-        name_by_muuid = {muuid: name for muuid, name in zip(muuids, names)}
+        name_by_mid = dict(zip(mids, names))
 
-        # Fetch matrices and history.
-        # TODO: postpone fetching to LazyData, or bring only the needed ones.
-        # TODO: where is failure stored??
-        matrices_by_muuid = self.fetch_dumps(muuids)
-        matrices_by_name = {
-            name_by_muuid[muuid]: matrices_by_muuid[muuid] for muuid in muuids
-        }
+        # Fetch matrices (lazily, if storage_info is provided).
+        new_mids = [mid for mid in mids if mid not in data.ids_lst]
+        matrices = data.matrices
+        if self.storage_info is None:
+            matrices_by_mid = self.fetch_dumps(new_mids)
+            for mid in new_mids:
+                matrices[name_by_mid[mid]] = matrices_by_mid[mid]
+        else:
+            for mid in new_mids:
+                matrices[name_by_mid[mid]] = UUID(mid)
 
-        # Create Data.
-        history = [Transformation.materialize(tr)
-                   for tr in self.fetch_dumps(huuids).values()]
-        uuids = {
-            name_by_muuid[muuid]: UUID.from_pretty(muuid) for muuid in muuids
-        }
+        # Fetch history.
+        serialized_tranfs = self.fetch_dumps(hids, aslist=True)
+        history = tuple(Transformer.materialize(tr) for tr in serialized_tranfs)
 
         # TODO: failure and frozen should be stored/fetched!
-        data = Data(uuid=uuid, uuids=uuids, history=history, failure=None,
-                    frozen=False, **matrices_by_name)
+        # TODO: would it be worth to update uuid/uuids here, instead of recalculating it from the start at Data.init?
+        return Data(history=history, failure=None, frozen=False, hollow=False,
+                    storage_info=self.storage_info,
+                    **matrices)
 
-        # TODO: mesclar outputdata com matrizes do inputdata.
-        #  Basta checar presença e uuid da matriz
-        #  no input_data para saber a atualidade.
-        return data
-
-    def fetch_matrix(self, uuid):
-        self.query(f'select value from dump where id=?', [uuid])
+    def fetch_matrix(self, id):
+        # TODO: quando faz select em algo que não existe, fica esperando
+        #  infinitamente algum lock liberar
+        self.query(f'select value from dump where id=?', [id])
         rone = self.get_one()
+        if rone is None:
+            raise Exception('Matrix not found!', id)
         return unpack(rone['value'])
 
-    def fetch_dumps(self, uuids):
-        qmarks = ','.join(['?'] * len(uuids))
-        sql = f'select id,value from dump where id in ({qmarks})'
-        self.query(sql, uuids)
+    def fetch_dumps(self, duids, aslist=False):
+        qmarks = ','.join(['?'] * len(duids))
+        sql = f'select id,value from dump where id in ({qmarks}) order by n'
+        self.query(sql, duids)
         rall = self.get_all()
         id_value = {row['id']: unpack(row['value']) for row in rall}
-        return {uuid: id_value[uuid] for uuid in uuids}
+        if aslist:
+            return [id_value[duid] for duid in duids]
+        else:
+            return {duid: id_value[duid] for duid in duids}
 
-    def unlock(self, hollow_data, training_data_uuid=None):
+    def unlock(self, data, training_data_uuid=None):
         # locked = rone and rone['t'] == '0000-00-00 00:00:00'
         # if not locked:
         #     raise UnlockedEntryException('Cannot unlock if it is not locked!')
-        self.query(f'delete from data where id=?', [hollow_data.uuid00.id])
+        self.query(f'delete from data where id=?', [data.uuid.id])
 
     def list_by_name(self, substring, only_historyless=True):
         # TODO: Pra fins de fetchbylist, pode ser usado o próprio Data se a
@@ -159,7 +163,7 @@ class SQL(Persistence):
         self.query(f'''
             create table if not exists data (
                 n integer NOT NULL primary key {self._auto_incr()},
-                id char(19) NOT NULL UNIQUE,
+                id char(18) NOT NULL UNIQUE,
                 names VARCHAR(255) NOT NULL,
                 matrices VARCHAR(2048), 
                 history VARCHAR(65535),
@@ -168,7 +172,7 @@ class SQL(Persistence):
         self.query(f'''
             create table if not exists dump (
                 n integer NOT NULL primary key {self._auto_incr()},
-                id char(19) NOT NULL UNIQUE,
+                id char(18) NOT NULL UNIQUE,
                 value LONGBLOB NOT NULL
             )''')
 
@@ -197,34 +201,34 @@ class SQL(Persistence):
         rows = self.cursor.fetchall()
         return [dict(row) for row in rows]
 
-    def store_dump(self, uuid_, value):
+    def store_dump(self, duid, value):
         """Store the given pair uuid-dump of a matrix/vector."""
         sql = f'insert or ignore into dump values (null, ?, ?)'
         from cururu.sql.sqlite import SQLite
         dump = memoryview(value) if isinstance(self, SQLite) else value
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.query(sql, [uuid_, dump])
+            self.query(sql, [duid, dump])
 
     def lock_impl(self, data):
-        uuid = data.uuid00.id
+        did = data.uuid.id
         if self.debug:
-            print('Locking...', uuid)
+            print('Locking...', did)
 
         sql = f"insert into data values (null,?,?,?,?,'0000-00-00 00:00:00')"
-        args = [uuid, '', '', '']
+        args = [did, '', '', '']
         from sqlite3 import IntegrityError as IntegrityErrorSQLite
         from pymysql import IntegrityError as IntegrityErrorMySQL
         try:
             self.query(sql, args)
         except IntegrityErrorSQLite as e:
             print(f'Unexpected lock! '
-                  f'Giving up my turn on {uuid} ppy/se', e)
+                  f'Giving up my turn on {did} ppy/se', e)
         except IntegrityErrorMySQL as e:
             print(f'Unexpected lock! '
-                  f'Giving up my turn on {uuid} ppy/se', e)
+                  f'Giving up my turn on {did} ppy/se', e)
         else:
-            print(f'Now locked for {uuid}')
+            print(f'Now locked for {did}')
 
     def query(self, sql, args=None):
         if self.read_only and not sql.startswith('select '):
