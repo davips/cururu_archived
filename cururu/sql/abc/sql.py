@@ -102,6 +102,8 @@ class SQL(Persistence):
         # TODO: would it be worth to update uuid/uuids here, instead of recalculating it from the start at Data.init?
         return Data(history=history, failure=None, frozen=False, hollow=False,
                     storage_info=self.storage_info,
+                    uuid=uuid?,
+                    uuids=uuids?,
                     **matrices)
 
     def fetch_matrix(self, id):
