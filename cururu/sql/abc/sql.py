@@ -1,3 +1,4 @@
+import json
 import warnings
 from abc import abstractmethod
 from typing import Optional
@@ -6,7 +7,7 @@ from cururu.persistence import Persistence, DuplicateEntryException
 from pjdata.aux.compression import unpack, pack
 from pjdata.aux.uuid import UUID
 from pjdata.content.data import Data
-from pjdata.transformer.transformer import Transformer
+from pjdata.history import History
 
 
 class SQL(Persistence):
@@ -44,7 +45,8 @@ class SQL(Persistence):
 
         # Insert history.  #TODO: would a transaction be faster here?
         for transf in data.history:
-            self.store_dump(transf.uuid.id, pack(transf.serialized))
+            obj = json.loads(transf)
+            self.store_dump(obj["uuid"], pack(transf))
 
         # Create row at table 'data'. ---------------------
         sql = f'insert into data values (NULL, ?, ?, ?, ?, NULL)'
@@ -96,15 +98,18 @@ class SQL(Persistence):
 
         # Fetch history.
         serialized_tranfs = self.fetch_dumps(hids, aslist=True)
-        history = tuple(Transformer.materialize(tr) for tr in serialized_tranfs)
+        history = History(serialized_tranfs)
 
         # TODO: failure and frozen should be stored/fetched!
         # TODO: would it be worth to update uuid/uuids here, instead of recalculating it from the start at Data.init?
-        return Data(history=history, failure=None, frozen=False, hollow=False,
-                    storage_info=self.storage_info,
-                    uuid=uuid?,
-                    uuids=uuids?,
-                    **matrices)
+        uuids = data.uuids
+        uuids.update(dict(zip(names, mids)))
+        return Data(
+            uuid=uuid,
+            uuids=uuids,
+            history=history, failure=None, frozen=False, hollow=False, stream=None,
+            storage_info=self.storage_info,
+            **matrices)
 
     def fetch_matrix(self, id):
         # TODO: quando faz select em algo que não existe, fica esperando
