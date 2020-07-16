@@ -1,6 +1,8 @@
 import json
 import warnings
 from abc import abstractmethod
+from threading import Thread
+from time import sleep
 from typing import Optional
 
 from cururu.persistence import Persistence, DuplicateEntryException
@@ -49,7 +51,7 @@ class SQL(Persistence):
             self.store_dump(obj["uuid"], pack(transf))
 
         # Create row at table 'data'. ---------------------
-        sql = f'insert into data values (NULL, ?, ?, ?, ?, NULL)'
+        sql = f'insert into data values (NULL, ?, ?, ?, ?, {self._now_function()})'
 
         data_args = [uuid.id,
                      data.matrix_names_str,
@@ -77,8 +79,12 @@ class SQL(Persistence):
         self.query(f"select * from data where id=?", [uuid.id])
         result = self.get_one()
         if result is None:
+            if lock:
+                self.lock(data)
             return None
         # values_by_id = {row['id']: row['value'] for row in rall}
+        if result['names'] == '':
+            raise Exception("Empty registry for", uuid)
         names = result['names'].split(',')
         mids = result['matrices'].split(',')
         hids = result['history'].split(',')
@@ -217,7 +223,7 @@ class SQL(Persistence):
             warnings.simplefilter("ignore")
             self.query(sql, [duid, dump])
 
-    def lock_impl(self, data):
+    def lock(self, data):
         did = data.uuid.id
         if self.debug:
             print('Locking...', did)
@@ -288,7 +294,6 @@ class SQL(Persistence):
     # self.query(f'CREATE INDEX nam1 ON dataset (attr)')
     # insl timestamp NOT NULL     # unique(dataset, hist),
     # spent FLOAT,        # fail TINYINT,      # start TIMESTAMP NOT NULL,
-    #     self._now_function()
     # update data set {','.join([f'{k}=?' for k in to_update.keys()])}
     # insd=insd, upd={self._now_function()} where did=?
     #     x = coalesce(values(x), x),
