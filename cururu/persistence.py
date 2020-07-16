@@ -59,7 +59,7 @@ class Persistence(ABC):
         LockedEntryException, FailedEntryException
         """
         if not data.ishollow:
-            raise Exception('Persistence expects a hollow Data object!')
+            raise Exception("Persistence expects a hollow Data object!")
         return self._fetch_impl(data, lock)
 
     @abstractmethod

@@ -5,18 +5,16 @@ from cururu.sql.abc.sqla import SQLA
 
 
 class MySQLA(SQLA):
-    def __init__(self, db='user:pass@ip/db'):
-        if '-' in db:
+    def __init__(self, db="user:pass@ip/db"):
+        if "-" in db:
             raise Exception("'-' not allowed in url!")  # because of db name
         # TIP: latin1 is to ensure 1 byte per char when storing UUIDs.
-        self.engine = sa.create_engine('mysql+pymysql://' + db,
-                                       encoding='utf8',
-                                       pool_recycle=3600, echo=True)
+        self.engine = sa.create_engine("mysql+pymysql://" + db, encoding="utf8", pool_recycle=3600, echo=True)
         super().__init__()
 
 
 class SQLiteA(SQLA):
-    def __init__(self, db='/tmp/cururu'):
+    def __init__(self, db="/tmp/cururu"):
         """
 
         Parameters
@@ -25,13 +23,12 @@ class SQLiteA(SQLA):
             When empty, uses volatile fast memory (RAM).
         blocking
         """
-        if db == '':
-            db = ':memory:'
+        if db == "":
+            db = ":memory:"
         else:
-            db += '.db'
+            db += ".db"
         # TIP: latin1 is to ensure 1 byte per char when storing UUIDs.
-        self.engine = sa.create_engine('sqlite:///' + db, encoding='utf8',
-                                       echo=True)
+        self.engine = sa.create_engine("sqlite:///" + db, encoding="utf8", echo=True)
 
         @event.listens_for(self.engine, "connect")
         def do_connect(dbapi_connection, connection_record):

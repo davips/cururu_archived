@@ -11,6 +11,7 @@ from queue import Empty
 class Worker2:
     """Intended to get IO out of the way,
     so storing of results doesn't affect the execution time."""
+
     multiprocess: bool = False
     timeout: float = 2  # Time spent hoping the thread will be useful again.
     queue = Queue()
@@ -35,7 +36,7 @@ class Worker2:
 
         # Create a new thread if there is none alive.
         if self.lock.acquire(False):
-            print('new thread......................................')
+            print("new thread......................................")
             self._new()
 
         # Wait for result if asked.
@@ -45,7 +46,7 @@ class Worker2:
                 self.outqueue.task_done()
                 return ret
             except Exception as e:
-                print('Problem while expecting storage reply:', e)
+                print("Problem while expecting storage reply:", e)
                 try:
                     self.outqueue.get()
                     self.outqueue.task_done()
@@ -83,7 +84,7 @@ class Worker2:
     @staticmethod
     def _prepare_args(locals_):
         locals_ = locals_.copy()
-        del locals_['self']
+        del locals_["self"]
         return locals_
 
     @staticmethod

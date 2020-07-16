@@ -1,6 +1,5 @@
 from pjml.tool.abc.mixin.timers import Timers
-from sqlalchemy import Column, Integer, LargeBinary, CHAR, \
-    VARCHAR
+from sqlalchemy import Column, Integer, LargeBinary, CHAR, VARCHAR
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
@@ -16,14 +15,14 @@ class SQLA(Persistence):
     def __init__(self):
         st = Timers._clock()
         if not database_exists(self.engine.url):
-            print('Creating database', self.engine.url)
+            print("Creating database", self.engine.url)
             create_database(self.engine.url)
         print(Timers._clock() - st)
 
         st = Timers._clock()
         Base.metadata.create_all(self.engine)
         print(Timers._clock() - st)
-        print('engine started,,,,,,,,,,,,,,,,,,,,,,,')
+        print("engine started,,,,,,,,,,,,,,,,,,,,,,,")
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         # TODO: verify if pure mysql is faster
@@ -31,29 +30,19 @@ class SQLA(Persistence):
     def store(self, data: Data, check_dup: bool = True):
         # TODO: merge pjdata.Data with sql.Data to have a single class and
         #  avoid having to copy the properties.
-        da = DataSQLA(
-            id=data.uuid.id,
-            names=data.matrix_names_str,
-            matrices=data.ids_str,
-            history=data.history_str
-        )
+        da = DataSQLA(id=data.uuid.id, names=data.matrix_names_str, matrices=data.ids_str, history=data.history_str)
         self.session.add(da)
 
         # TODO: handle fields properly
         for matrix_name in data.matrix_names:
-            du = Dump(
-                id=data.uuids[matrix_name].id,
-                value=data.field_dump(matrix_name)
-            )
+            du = Dump(id=data.uuids[matrix_name].id, value=data.field_dump(matrix_name))
             self.session.add(du)
 
         self.session.commit()
 
     def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         DataSQLA(id=data.uuid)
-        d = self.session.query(DataSQLA).filter_by(
-            id=data.uuid.id
-        ).first()
+        d = self.session.query(DataSQLA).filter_by(id=data.uuid.id).first()
         if d is None:
             return None
         NoData.updated(d.history_str)

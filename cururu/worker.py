@@ -14,6 +14,7 @@ class Nothing(type):
 class Worker:
     """Intended to get IO out of the way,
     so storing of results doesn't affect the execution time."""
+
     setup: type = None
     setup_kwargs: dict = field(default_factory=dict)
     multiprocess: bool = False
@@ -24,7 +25,7 @@ class Worker:
     thread_lock = threading.Lock()
 
     def __post_init__(self):
-        print('new worker......................................')
+        print("new worker......................................")
         if self.multiprocess:
             self.lock = self.process_lock
             self.klass = multiprocessing.Process
