@@ -83,7 +83,6 @@ class PickleServer(Persistence):
     def _filename(self, prefix, data):
         zip = "compressed" if self.compress else ""
         # Not very efficient.  TODO: memoize extraction of fields from JSON?
-        print(list(data.history)[0])
         uuids = [json.loads(tr)['uuid'][:6] for tr in data.history]
         rest = f"-".join(uuids) + f".{zip}.dump"
         if prefix == "*":

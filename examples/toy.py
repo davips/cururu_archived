@@ -2,6 +2,7 @@
 
 from cururu.persistence import DuplicateEntryException
 from cururu.pickleserver import PickleServer
+from pjdata.content.specialdata import UUIDData
 from pjdata.data_creation import read_arff
 
 lst = PickleServer().list_by_name('iris')
@@ -51,3 +52,7 @@ test.fetch(data.hollow())
 # print('Getting a complete Data object...')
 # data = test.fetch(lista[0])
 # print(data.X)
+
+# # Resgatar por UUID ###########################
+byuuid = PickleServer().fetch(UUIDData(data.uuid))
+print(byuuid)
