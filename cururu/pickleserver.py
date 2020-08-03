@@ -1,6 +1,9 @@
+import _pickle as pickle
+import json
 import os
 import traceback
-from time import sleep
+from glob import glob
+from pathlib import Path
 
 from cururu.disk import save, load
 from cururu.persistence import (
@@ -10,10 +13,6 @@ from cururu.persistence import (
     DuplicateEntryException,
     UnlockedEntryException,
 )
-import _pickle as pickle
-from pathlib import Path
-from glob import glob
-
 from pjdata.types import Data
 
 
@@ -83,7 +82,9 @@ class PickleServer(Persistence):
 
     def _filename(self, prefix, data):
         zip = "compressed" if self.compress else ""
-        uuids = [tr.sid for tr in data.history]
+        # Not very efficient.  TODO: memoize extraction of fields from JSON?
+        print(list(data.history)[0])
+        uuids = [json.loads(tr)['uuid'][:6] for tr in data.history]
         rest = f"-".join(uuids) + f".{zip}.dump"
         if prefix == "*":
             query = self.db + "/*" + rest
