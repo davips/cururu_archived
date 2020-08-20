@@ -45,7 +45,8 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 INSTALL_REQUIRES = [
     'zstandard', 'lz4', 'liac-arff', 'numpy', 'pjdata', 'sqlalchemy',
-    'sqlalchemy-utils', 'pymysql'
+    'sqlalchemy-utils', 'pymysql',
+    'pjdata @ git+https://github.com/davips/pjdata@master#egg=package1.0',
 ]
 
 
@@ -66,6 +67,7 @@ EXTRAS_REQUIRE = {
     ]
 }
 
+SETUP_REQUIRES = ['flake8', 'autopep8', 'wheel']
 
 setuptools.setup(
     name=NAME,
@@ -82,6 +84,7 @@ setuptools.setup(
     classifiers=CLASSIFIERS,
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
+    setup_requires=SETUP_REQUIRES    
 )
 
 package_dir = {'': 'cururu'}  # For IDEs like Intellij to recognize the package.
