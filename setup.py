@@ -1,6 +1,6 @@
 """Setup for cururu package."""
-import os
 import setuptools
+
 import cururu
 
 NAME = "cururu"
@@ -44,7 +44,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 
 INSTALL_REQUIRES = [
-    'zstandard', 'lz4', 'liac-arff', 'numpy', 'pjdata', 'sqlalchemy',
+    'zstandard', 'lz4', 'liac-arff', 'numpy', 'sqlalchemy',
     'sqlalchemy-utils', 'pymysql',
     'pjdata @ git+https://github.com/davips/pjdata@master#egg=package1.0',
 ]

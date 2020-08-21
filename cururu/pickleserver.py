@@ -1,9 +1,10 @@
 import _pickle as pickle
-import json
 import os
 import traceback
 from glob import glob
 from pathlib import Path
+
+from pjdata.types import Data
 
 from cururu.disk import save, load
 from cururu.persistence import (
@@ -13,7 +14,6 @@ from cururu.persistence import (
     DuplicateEntryException,
     UnlockedEntryException,
 )
-from pjdata.types import Data
 
 
 class PickleServer(Persistence):
@@ -53,7 +53,7 @@ class PickleServer(Persistence):
         convenience."""
 
         # TODO: reput name on Data?
-        filename = self._filename("name", data)
+        filename = self._filename("", data)
         # filename = self._filename(data.name, data, training_data_uuid)
 
         # sleep(0.020)  # Latency simulator.
@@ -83,8 +83,9 @@ class PickleServer(Persistence):
     def _filename(self, prefix, data):
         zip = "compressed" if self.compress else ""
         # Not very efficient.  TODO: memoize extraction of fields from JSON?
-        uuids = [json.loads(tr)['uuid'][:6] for tr in data.history]
-        rest = f"-".join(uuids) + f".{zip}.dump"
+        # uuids = [json.loads(tr)['uuid'][:6] for tr in data.history]
+        # rest = f"-".join(uuids) + f".{zip}.dump"
+        rest = f"{data.id}.{zip}.dump"
         if prefix == "*":
             query = self.db + "/*" + rest
             lst = glob(query)
