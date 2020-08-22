@@ -13,12 +13,14 @@ for phantom in lst:
 from cururu.pickleserver import PickleServer
 
 print('Storing iris...')
+data = 0
 try:
     data = read_arff('iris.arff')[1]
     PickleServer().store(data)
-    print('ok!')
 except DuplicateEntryException:
     print('Duplicate! Ignored.')
+d = PickleServer().fetch(UUIDData(data.uuid))
+print('ok!', d.id)
 
 lst = PickleServer().list_by_name('iris')
 for phantom in lst:
