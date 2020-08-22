@@ -3,6 +3,7 @@ import os
 import traceback
 from glob import glob
 from pathlib import Path
+from typing import Optional
 
 from pjdata.types import Data
 
@@ -23,13 +24,13 @@ class PickleServer(Persistence):
         if not Path(db).exists():
             os.mkdir(db)
 
-    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
+    def _fetch_impl(self, data: Data, lock: bool = False) -> Optional[Data]:
         # TODO: deal with fields and missing fields?
-        filename = self._filename("*", data,)
+        filename = self._filename("*", data)
 
         # Not started yet?
         if not Path(filename).exists():
-            # print('W: Not started.', filename)
+            print('W: Not started.', filename)
             if lock:
                 print("W: Locking...", filename)
                 Path(filename).touch()

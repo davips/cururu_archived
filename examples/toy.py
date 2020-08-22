@@ -1,5 +1,6 @@
 # Listar *iris*
 
+from zipfile import ZipFile
 from cururu.persistence import DuplicateEntryException
 from cururu.pickleserver import PickleServer
 from pjdata.content.specialdata import UUIDData
@@ -44,7 +45,7 @@ try:
 except DuplicateEntryException:
     print('Duplicate! Ignored.')
 
-test.fetch(data.hollow())
+print("fetch", test.fetch(data.hollow()).id)
 
 # # Teste de leitura ############################
 # print('Getting Data information-only objects...')
@@ -57,4 +58,19 @@ test.fetch(data.hollow())
 
 # # Resgatar por UUID ###########################
 byuuid = PickleServer().fetch(UUIDData(data.uuid))
-print(byuuid)
+print("byuuid", byuuid)
+
+uuid = "ġɼпϋæӖƱӌЄɬϳҢğv"
+data = PickleServer().fetch(UUIDData(uuid))
+print("------------", data)
+if data is None:
+    raise Exception("Download failed: " + uuid + " not found!")
+
+print("arffing...")
+arff = data.arff("No name", "No description")
+
+print("zipping...")
+zipped_file = ZipFile("/tmp/lixo.zip", 'w')
+print("add...")
+zipped_file.writestr(uuid, arff)
+zipped_file.close()
