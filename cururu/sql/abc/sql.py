@@ -104,6 +104,7 @@ class SQL(Persistence):
 
         # Fetch history.
         serialized_tranfs = self.fetch_dumps(hids, aslist=True)
+        # TODO: deserializar antes de por no histórico
         history = History(serialized_tranfs)
 
         # TODO: failure and frozen should be stored/fetched!

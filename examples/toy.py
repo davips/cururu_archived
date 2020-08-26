@@ -3,6 +3,7 @@
 from zipfile import ZipFile
 from cururu.persistence import DuplicateEntryException
 from cururu.pickleserver import PickleServer
+from pjdata.aux.uuid import UUID
 from pjdata.content.specialdata import UUIDData
 from pjdata.creation import read_arff
 
@@ -60,7 +61,7 @@ print("fetch", test.fetch(data.hollow()).id)
 byuuid = PickleServer().fetch(UUIDData(data.uuid))
 print("byuuid", byuuid)
 
-uuid = "ġɼпϋæӖƱӌЄɬϳҢğv"
+uuid = "ĹЇЖȡfĭϹƗͶэգ8Ƀű"
 data = PickleServer().fetch(UUIDData(uuid))
 print("------------", data)
 if data is None:
@@ -74,3 +75,15 @@ zipped_file = ZipFile("/tmp/lixo.zip", 'w')
 print("add...")
 zipped_file.writestr(uuid, arff)
 zipped_file.close()
+
+uuid = UUID("ĹЇЖȡfĭϹƗͶэգ8Ƀű")
+storage = PickleServer()
+data = storage.fetch(UUIDData(uuid))
+lst = []
+# TODO: show uuid along with post name in the web interface
+for transformer in reversed(list(data.history)[0:]):  # Discards data birth (e.g. File).
+    uuid = uuid / transformer.uuid  # Revert to previous uuid.
+    data = storage.fetch(UUIDData(uuid))
+    dic = {"uuid": uuid, "transformation": transformer.name, "help": transformer, "exist": data is not None}
+    lst.append(dic)
+print(list(reversed(lst)))
