@@ -110,7 +110,7 @@ class SQL(Persistence):
         # TODO: failure and frozen should be stored/fetched!
         # TODO: would it be worth to update uuid/uuids here, instead of recalculating it from the start at Data.init?
         uuids = data.uuids
-        uuids.update(dict(zip(names, mids)))
+        uuids.update(dict(zip(names, map(UUID, mids))))
         return Data(
             uuid=uuid,
             uuids=uuids,
@@ -133,6 +133,8 @@ class SQL(Persistence):
         return unpack(rone["value"])
 
     def fetch_dumps(self, duids, aslist=False):
+        if len(duids) == 0:
+            return [] if aslist else dict()
         qmarks = ",".join(["?"] * len(duids))
         sql = f"select id,value from dump where id in ({qmarks}) order by n"
         self.query(sql, duids)
