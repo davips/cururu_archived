@@ -5,7 +5,7 @@ from threading import Thread
 from time import sleep
 from typing import Optional
 
-from cururu.persistence import Persistence, DuplicateEntryException
+from cururu.persistence import Persistence, DuplicateEntryException, LockedEntryException
 from pjdata.aux.compression import unpack, pack
 from pjdata.aux.uuid import UUID
 from pjdata.content.data import Data
@@ -47,8 +47,7 @@ class SQL(Persistence):
 
         # Insert history.  #TODO: would a transaction be faster here?
         for transf in data.history:
-            obj = json.loads(transf)
-            self.store_dump(obj["uuid"], pack(transf))
+            self.store_dump(transf.id, pack(transf.serialized))
 
         # Create row at table 'data'. ---------------------
         sql = f"insert into data values (NULL, ?, ?, ?, ?, {self._now_function()})"
@@ -75,13 +74,17 @@ class SQL(Persistence):
         uuid = data.uuid
         self.query(f"select * from data where id=?", [uuid.id])
         result = self.get_one()
+
         if result is None:
             if lock:
                 self.lock(data)
             return None
         # values_by_id = {row['id']: row['value'] for row in rall}
+
         if result["names"] == "":
-            raise Exception("Empty registry for", uuid)
+            print("W: Previously locked by other process.", data)
+            raise LockedEntryException(data)
+
         names = result["names"].split(",")
         mids = result["matrices"].split(",")
         hids = result["history"].split(",")

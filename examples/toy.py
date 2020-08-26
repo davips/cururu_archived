@@ -4,7 +4,7 @@ from zipfile import ZipFile
 from cururu.persistence import DuplicateEntryException
 from cururu.pickleserver import PickleServer
 from pjdata.content.specialdata import UUIDData
-from pjdata.data_creation import read_arff
+from pjdata.creation import read_arff
 
 lst = PickleServer().list_by_name('iris')
 for phantom in lst:
