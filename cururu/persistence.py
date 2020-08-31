@@ -94,19 +94,19 @@ class Persistence(ABC):
     def unlock(self, data, training_data_uuid=None):
         pass
 
-    def visual_history(self, id_, folder=None, prefix=""):
+    def visual_history(self, id_, folder=None):
         uuid = UUID(id_)
         data = self.fetch(UUIDData(uuid))
         lst = []
         for transformer in reversed(list(data.history)[0:]):  # Discards data birth (e.g. File). TODO
             data = self.fetch(UUIDData(uuid))
             dic = {
-                "label": uuid.id, "transformation": transformer.name, "help": str(transformer), "stored": data is not None
+                "label": uuid.id, "name": transformer.name, "help": str(transformer), "stored": data is not None
             }
             if folder:
-                output = f"{folder}/{uuid}.jpg"
-                dic["avatar"] = prefix + output
-                uuid.generate_avatar()
+                filename = f"{uuid}.jpg"
+                dic["avatar"] = filename
+                uuid.generate_avatar(f"{folder}/{filename}")
             lst.append(dic)
             uuid = uuid / transformer.uuid  # Revert to previous data uuid.
         return list(reversed(lst))
