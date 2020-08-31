@@ -109,6 +109,15 @@ class Persistence(ABC):
                 uuid.generate_avatar(f"{folder}/{filename}")
             lst.append(dic)
             uuid = uuid / transformer.uuid  # Revert to previous data uuid.
+
+        # Ether (source of all Data objects)
+        uuid.generate_avatar(f"{folder}/{f'{uuid}.jpg'}")
+        dic = {
+            "label": uuid.id, "name": "", "help": "Ether, the origin of all datasets.", "stored": False,
+            "avatar": f"{uuid}.jpg"
+        }
+        lst.append(dic)
+
         return list(reversed(lst))
 
 
