@@ -101,7 +101,7 @@ class Persistence(ABC):
         for transformer in reversed(list(data.history)[0:]):  # Discards data birth (e.g. File). TODO
             data = self.fetch(UUIDData(uuid))
             dic = {
-                "label": uuid, "transformation": transformer.name, "help": str(transformer), "stored": data is not None
+                "label": uuid.id, "transformation": transformer.name, "help": str(transformer), "stored": data is not None
             }
             if folder:
                 output = f"{folder}/{uuid}.jpg"
