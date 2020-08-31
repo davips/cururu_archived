@@ -23,7 +23,8 @@ try:
 except DuplicateEntryException:
     print('Duplicate! Ignored.')
 d = PickleServer().fetch(UUIDData(data.uuid))
-print('ok!', d.id)
+print('ok!', data.id, data.history)
+print('ok!', d.id, d.history)
 
 lst = PickleServer().list_by_name('iris')
 for phantom in lst:
