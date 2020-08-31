@@ -1,5 +1,5 @@
 # Listar *iris*
-
+import json
 from zipfile import ZipFile
 from cururu.persistence import DuplicateEntryException
 from cururu.pickleserver import PickleServer
@@ -83,17 +83,4 @@ zipped_file.close()
 storage = PickleServer()
 uuid = "ĹЇЖȡfĭϹƗͶэգ8Ƀű"
 vhist = storage.visual_history(uuid, "/tmp")
-print(vhist)
-
-hist = []
-for dic in vhist:
-    hist.append(
-        "<table><tr><td><center><div title='" + dic["help"] + "'>" + dic["transformation"] + "</div>\n"
-        + f"<button {'disabled' if not dic['stored'] else ''}>\n"
-        "   <img src='" + dic["avatar"] + "' onClick={\n"
-        + "       () => {navigator.clipboard.writeText('" + dic['label'] + "')}\n"
-        + "   } title='" + dic["label"] + "'/><br>→→→→→→</div></center></td><td>\n"
-        + "</button></td></tr></table>"
-    )
-print()
-print(''.join(str(x) for x in hist))
+print(json.dumps(vhist, indent=4))

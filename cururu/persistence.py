@@ -95,11 +95,15 @@ class Persistence(ABC):
         pass
 
     def visual_history(self, id_, folder=None):
-        uuid = UUID(id_)
-        data = self.fetch(UUIDData(uuid))
+        """List with all steps/Data objects before the current one. The current avatar is also generated."""
+        uuid = UUID()
+        data = None
+        lastuuid = UUID(id_)
+        history = self.fetch(UUIDData(lastuuid)).history
+        if folder:
+            lastuuid.generate_avatar(f"{folder}/{f'{id_}.jpg'}")
         lst = []
-        for transformer in reversed(list(data.history)[0:]):  # Discards data birth (e.g. File). TODO
-            data = self.fetch(UUIDData(uuid))
+        for transformer in history:
             dic = {
                 "label": uuid.id, "name": transformer.name, "help": str(transformer), "stored": data is not None
             }
@@ -108,17 +112,10 @@ class Persistence(ABC):
                 dic["avatar"] = filename
                 uuid.generate_avatar(f"{folder}/{filename}")
             lst.append(dic)
-            uuid = uuid / transformer.uuid  # Revert to previous data uuid.
+            uuid = uuid * transformer.uuid
+            data = self.fetch(UUIDData(uuid))
 
-        # Ether (source of all Data objects)
-        uuid.generate_avatar(f"{folder}/{f'{uuid}.jpg'}")
-        dic = {
-            "label": uuid.id, "name": "", "help": "Ether, the origin of all datasets.", "stored": False,
-            "avatar": f"{uuid}.jpg"
-        }
-        lst.append(dic)
-
-        return list(reversed(lst))
+        return lst
 
 
 class UnlockedEntryException(Exception):
