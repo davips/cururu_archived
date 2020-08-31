@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from pjdata.aux.uuid import UUID
+from pjdata.content.specialdata import UUIDData
 from pjdata.types import Data
 
 
@@ -91,6 +93,23 @@ class Persistence(ABC):
     @abstractmethod
     def unlock(self, data, training_data_uuid=None):
         pass
+
+    def visual_history(self, id_, folder=None, prefix=""):
+        uuid = UUID(id_)
+        data = self.fetch(UUIDData(uuid))
+        lst = []
+        for transformer in reversed(list(data.history)[0:]):  # Discards data birth (e.g. File). TODO
+            data = self.fetch(UUIDData(uuid))
+            dic = {
+                "label": uuid, "transformation": transformer.name, "help": str(transformer), "stored": data is not None
+            }
+            if folder:
+                output = f"{folder}/{uuid}.jpg"
+                dic["avatar"] = prefix + output
+                uuid.generate_avatar()
+            lst.append(dic)
+            uuid = uuid / transformer.uuid  # Revert to previous data uuid.
+        return list(reversed(lst))
 
 
 class UnlockedEntryException(Exception):
