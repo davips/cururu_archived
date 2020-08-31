@@ -3,6 +3,7 @@
 from zipfile import ZipFile
 from cururu.persistence import DuplicateEntryException
 from cururu.pickleserver import PickleServer
+from cururu.sql.mysql import MySQL
 from pjdata.aux.uuid import UUID
 from pjdata.content.specialdata import UUIDData
 from pjdata.creation import read_arff
@@ -63,6 +64,9 @@ print("byuuid", byuuid)
 
 uuid = "ĹЇЖȡfĭϹƗͶэգ8Ƀű"
 data = PickleServer().fetch(UUIDData(uuid))
+print("dddddddddddd", data.matrices.keys())
+storage = MySQL(db="paje:paje2020@143.107.183.114/paje")
+# storage.store(data)
 print("------------", data)
 if data is None:
     raise Exception("Download failed: " + uuid + " not found!")
@@ -76,14 +80,20 @@ print("add...")
 zipped_file.writestr(uuid, arff)
 zipped_file.close()
 
-uuid = UUID("ĹЇЖȡfĭϹƗͶэգ8Ƀű")
 storage = PickleServer()
-data = storage.fetch(UUIDData(uuid))
-lst = []
-# TODO: show uuid along with post name in the web interface
-for transformer in reversed(list(data.history)[0:]):  # Discards data birth (e.g. File).
-    uuid = uuid / transformer.uuid  # Revert to previous uuid.
-    data = storage.fetch(UUIDData(uuid))
-    dic = {"uuid": uuid, "transformation": transformer.name, "help": transformer, "exist": data is not None}
-    lst.append(dic)
-print(list(reversed(lst)))
+uuid = "ĹЇЖȡfĭϹƗͶэգ8Ƀű"
+vhist = storage.visual_history(uuid, "/tmp")
+print(vhist)
+
+hist = []
+for dic in vhist:
+    hist.append(
+        "<table><tr><td><center><div title='" + dic["help"] + "'>" + dic["transformation"] + "</div>\n"
+        + f"<button {'disabled' if not dic['stored'] else ''}>\n"
+        "   <img src='" + dic["avatar"] + "' onClick={\n"
+        + "       () => {navigator.clipboard.writeText('" + dic['label'] + "')}\n"
+        + "   } title='" + dic["label"] + "'/><br>→→→→→→</div></center></td><td>\n"
+        + "</button></td></tr></table>"
+    )
+print()
+print(''.join(str(x) for x in hist))
