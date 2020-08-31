@@ -45,7 +45,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 INSTALL_REQUIRES = [
     'zstandard', 'lz4', 'liac-arff', 'numpy', 'sqlalchemy',
-    'sqlalchemy-utils', 'pymysql',
+    'sqlalchemy-utils', 'pymysql', 'requests'
     #'pjdata @ git+https://github.com/davips/pjdata@master#egg=package1.0',
 ]
 
