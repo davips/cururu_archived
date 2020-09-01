@@ -9,8 +9,9 @@ from pjdata.types import Data
 
 
 class OkaServer(Persistence):
-    def __init__(self, token, post=False, url="http://localhost:5000/api/cururu"):
+    def __init__(self, token, storage_info=None, post=False, url="http://localhost:5000/api/cururu"):
         self.headers = {'Authorization': 'Bearer ' + token}
+        self.storage_info = storage_info
         self.url = url
         self.post = post
 

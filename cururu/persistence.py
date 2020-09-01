@@ -1,7 +1,9 @@
+import json
 from abc import ABC, abstractmethod
 
 from pjdata.aux.uuid import UUID
 from pjdata.content.specialdata import UUIDData
+from pjdata.transformer.transformer import Transformer
 from pjdata.types import Data
 
 
@@ -99,20 +101,27 @@ class Persistence(ABC):
         uuid = UUID()
         data = None
         lastuuid = UUID(id_)
-        history = self.fetch(UUIDData(lastuuid)).history
+        firstdata = self.fetch(UUIDData(lastuuid))
+        history = firstdata.history or firstdata.historystr
         if folder:
             lastuuid.generate_avatar(f"{folder}/{f'{id_}.jpg'}")
         lst = []
         for transformer in history:
+            if isinstance(transformer, Transformer):
+                name = transformer.name
+                transformeruuid = transformer.uuid
+            else:
+                name = transformer["name"]
+                transformeruuid = transformer["uuid"]
             dic = {
-                "label": uuid.id, "name": transformer.name, "help": str(transformer), "stored": data is not None
+                "label": uuid.id, "name": name, "help": str(transformer), "stored": data is not None
             }
             if folder:
                 filename = f"{uuid}.jpg"
                 dic["avatar"] = filename
                 uuid.generate_avatar(f"{folder}/{filename}")
             lst.append(dic)
-            uuid = uuid * transformer.uuid
+            uuid = uuid * transformeruuid
             data = self.fetch(UUIDData(uuid))
 
         return lst
