@@ -56,9 +56,12 @@ class Storage(Worker2, Persistence):
             from cururu.sql.mysql import MySQL
             # TODO: does mysql already have extra settings now?
             return MySQL(storage_info=alias, **kwargs)
+        elif engine == "okapost":
+            from cururu.okaserver import OkaServer
+            return OkaServer(storage_info=alias, post=True, **kwargs)
         elif engine == "oka":
             from cururu.okaserver import OkaServer
-            return OkaServer(storage_info=alias, **kwargs)
+            return OkaServer(storage_info=alias, post=False, **kwargs)
         elif engine == "sqlite":
             from cururu.sql.sqlite import SQLite
             return SQLite(storage_info=alias, **kwargs)
