@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 
 import requests
@@ -8,13 +9,17 @@ from pjdata.types import Data
 
 
 class OkaServer(Persistence):
-    def __init__(self, token, url="http://localhost:5000/api/cururu"):
+    def __init__(self, token, post=False, url="http://localhost:5000/api/cururu"):
         self.headers = {'Authorization': 'Bearer ' + token}
         self.url = url
+        self.post = post
 
     def store(self, data: Data, check_dup: bool = True):
         packed = pack(data)
-        files = {'file': BytesIO(packed)}
+        files = {
+            'json': BytesIO(json.dumps({'create_post': self.post}).encode()),
+            'file': BytesIO(packed)
+        }
         r = requests.post(self.url, files=files, headers=self.headers)
 
     def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
