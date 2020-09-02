@@ -13,6 +13,10 @@ class Persistence(ABC):
      SQLite, remote/local MongoDB, MySQL server, pickled or even CSV files.
     """
 
+    # @abstractmethod
+    # def dump(self,):
+    #     """Dump component"""
+
     @abstractmethod
     def store(self, data: Data, check_dup: bool = True):
         """
