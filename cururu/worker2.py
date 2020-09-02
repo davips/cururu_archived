@@ -1,3 +1,4 @@
+import json
 import multiprocessing
 import threading
 from abc import abstractmethod
@@ -6,21 +7,22 @@ from multiprocessing import JoinableQueue
 from multiprocessing import Queue
 from queue import Empty
 
+from pjdata.config import STORAGE_CONFIG
+
 
 @dataclass
 class Worker2:
-    """Intended to get IO out of the way,
-    so storing of results doesn't affect the execution time."""
-
-    multiprocess: bool = False
+    """Intended to get IO out of the way, so storing of results doesn't affect the execution time."""
+    multiprocess: bool = False  # Perhaps threading mode will not work with more than one Cache in the same workflow.
     timeout: float = 2  # Time spent hoping the thread will be useful again.
-    queue = Queue()
-    alias = None
-    outqueue = JoinableQueue()
-    process_lock = multiprocessing.Lock()
-    thread_lock = threading.Lock()
+    alias: str = None
 
     def __post_init__(self):
+        self.queue = Queue()
+        self.outqueue = JoinableQueue()
+        self.process_lock = multiprocessing.Lock()
+        self.thread_lock = threading.Lock()
+
         if self.multiprocess:
             self.lock = self.process_lock
             self.klass = multiprocessing.Process

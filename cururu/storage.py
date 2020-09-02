@@ -22,8 +22,7 @@ class Storage(Worker2, Persistence):
         return STORAGE_CONFIG["storages"][alias]
 
     def __init__(self, alias):
-        super().__init__()
-        self.alias = alias
+        super().__init__(alias=alias)
 
     def store(self, data: Data, check_dup: bool = True):
         self.put("store", locals())
@@ -47,7 +46,7 @@ class Storage(Worker2, Persistence):
 
     @staticmethod
     def backend(alias):
-        kwargs = STORAGE_CONFIG.get(alias, {})
+        kwargs = STORAGE_CONFIG.get(alias, {}).copy()
         engine = kwargs.pop("engine") if "engine" in kwargs else alias
 
         if engine == "amnesia":
