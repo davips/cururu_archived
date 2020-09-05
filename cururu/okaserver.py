@@ -25,6 +25,8 @@ class OkaServer(Persistence):
 
     def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
         response = requests.get(self.url + f"?uuid={data.id}", headers=self.headers)
+        if b"errors" in response.content:
+            raise Exception("Invalid token")
         return unpack(response.content)
 
     def fetch_matrix(self, id):
