@@ -8,7 +8,7 @@ print("Reading file...")
 data = read_arff("iris.arff")[1]
 
 print("Storing...")
-storage.store(data)
+storage.store(data)  # TODO: it is always sending the file, even when not needed
 
 print("Fetching...")
 d = storage.fetch(UUIDData("ĹЇЖȡfĭϹƗͶэգ8Ƀű"))
