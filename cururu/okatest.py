@@ -7,7 +7,7 @@ from pjdata.creation import read_arff
 with open("token.txt", "r") as f:
     token = json.load(f)["token"]
 
-storage = OkaServer(post=True, token=token)
+storage = OkaServer(post=True, token=token, url="http://data.analytics.icmc.usp.br/api/cururu")
 
 print("Reading file...")
 data = read_arff("iris.arff")[1]

@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from pjdata.aux.uuid import UUID
 from pjdata.content.specialdata import UUIDData
 from pjdata.transformer.transformer import Transformer
-from pjdata.types import Data
 
 
 class Persistence(ABC):
@@ -18,7 +17,7 @@ class Persistence(ABC):
     #     """Dump component"""
 
     @abstractmethod
-    def store(self, data: Data, check_dup: bool = True):
+    def store(self, data, check_dup: bool = True):
         """
         Parameters
         ----------
@@ -43,10 +42,10 @@ class Persistence(ABC):
         pass
 
     @abstractmethod
-    def _fetch_impl(self, data: Data, lock: bool = False) -> Data:
+    def _fetch_impl(self, data, lock: bool = False) :
         pass
 
-    def fetch(self, data: Data, lock: bool = False) -> Data:
+    def fetch(self, data, lock: bool = False) :
         """Fetch data from DB.
 
         Parameters
