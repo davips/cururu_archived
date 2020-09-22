@@ -32,59 +32,40 @@ DOWNLOAD_URL = 'https://github.com/automated-data-science/cururu/releases'
 
 
 CLASSIFIERS = ['Intended Audience :: Science/Research',
-               'Intended Audience :: Developers',
                'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
                'Natural Language :: English',
                'Programming Language :: Python',
-               'Topic :: Software Development',
                'Topic :: Scientific/Engineering',
-               'Operating System :: OS Independent',
-               'Programming Language :: Python :: 3.6',
-               'Programming Language :: Python :: 3.7']
+               'Operating System :: Linux',
+               'Programming Language :: Python :: 3.8']
 
 
 INSTALL_REQUIRES = [
-    'zstandard', 'lz4', 'liac-arff', 'numpy', 'sqlalchemy',
-    'sqlalchemy-utils', 'pymysql', 'requests'
-    #'pjdata @ git+https://github.com/davips/pjdata@master#egg=package1.0',
+    'numpy', 'sklearn', 'liac-arff'
 ]
 
 
 EXTRAS_REQUIRE = {
-    'code-check': [
-        'pylint',
-        'mypy'
-    ],
-    'tests': [
-        'pytest',
-        'pytest-cov',
-    ],
-    'docs': [
-        'sphinx',
-        'sphinx-gallery',
-        'sphinx_rtd_theme',
-        'numpydoc'
-    ]
 }
 
-SETUP_REQUIRES = ['flake8', 'autopep8', 'wheel']
+SETUP_REQUIRES = ['wheel']
 
 setuptools.setup(
     name=NAME,
     version=VERSION,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
+    classifiers=CLASSIFIERS,
     description=DESCRIPTION,
+    download_url=DOWNLOAD_URL,
+    extras_require=EXTRAS_REQUIRE,
+    install_requires=INSTALL_REQUIRES,
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     license=LICENSE,
-    url=URL,
-    download_url=DOWNLOAD_URL,
     packages=setuptools.find_packages(),
-    classifiers=CLASSIFIERS,
-    install_requires=INSTALL_REQUIRES,
-    extras_require=EXTRAS_REQUIRE,
-    setup_requires=SETUP_REQUIRES    
+    setup_requires=SETUP_REQUIRES,
+    url=URL,
 )
 
 package_dir = {'': 'cururu'}  # For IDEs like Intellij to recognize the package.
